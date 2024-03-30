@@ -3,7 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/DexterLB/mpvipc"
@@ -27,8 +30,8 @@ func initConn() {
 }
 
 func TogglePlayback() {
-	err := conn.Set("pause", playing)
 	playing = !playing
+	err := conn.Set("pause", playing)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -39,22 +42,51 @@ var (
 	started           = false
 )
 
-func PlaySong(item SongItem) {
-	if started || (currentMPVProcess != nil && currentMPVProcess.Process != nil) {
-		fmt.Println("Already playing")
+func KillMpv() {
+	if currentMPVProcess == nil || currentMPVProcess.Process == nil {
+		fmt.Println("MPV process not found")
 		return
 	}
-	fmt.Println("Starting playback")
+
+	if err := currentMPVProcess.Process.Kill(); err != nil {
+		fmt.Printf("Failed to kill MPV process: %v\n", err)
+	}
+}
+
+func PlaySong(item SongItem) {
 	started = true
-	currentMPVProcess := exec.Command(
+	currentMPVProcess = exec.Command(
 		"mpv",
 		"--input-unix-socket=/tmp/mpv_socket",
 		"--no-video",
 		"https://www.youtube.com/watch?v="+item.VideoID,
 	)
-	currentMPVProcess.Start()
+	if err := currentMPVProcess.Start(); err != nil {
+		fmt.Printf("Failed to start MPV: %v\n", err)
+		return
+	}
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		for {
+			sig := <-sigChan
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				KillMpv()
+			}
+		}
+	}()
+
 	if conn == nil {
 		time.Sleep(1 * time.Second)
 		initConn()
 	}
+	go func() {
+		if err := currentMPVProcess.Wait(); err != nil {
+			fmt.Printf("MPV process exited with error: %v\n", err)
+		} else {
+			fmt.Println("MPV process exited normally")
+		}
+	}()
 }

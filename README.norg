@@ -1,7 +1,14 @@
 * BubbleTube
 ** TODO
-   - ( ) kill mpv process when go process dies
-   - ( ) display list of songs of playlist in a new view when playlist is selected
-   - ( ) play pause doesnt work on first press
+   - (x) kill mpv process when go process dies
+   - (x) display list of songs of playlist in a new view when playlist is selected
+   - (x) play pause doesnt work on first press
+   - ( ) add ui
+   -- ( ) search bar
+   -- ( ) playback progress bar + play/pause indicator
+   -- ( ) timer
+   -- ( ) volume
+   - ( ) shuffle
+   - ( ) autoplay next song
 ** Dependencies
    - mpv

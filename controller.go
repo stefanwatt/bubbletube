@@ -22,6 +22,7 @@ func updateListView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			m.quitting = true
+			KillMpv()
 			return m, tea.Quit
 
 		case "enter":
@@ -55,6 +56,7 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "q", "ctrl+c":
 			m.quitting = true
 			m.choice = ""
+			KillMpv()
 			return m, tea.Quit
 		case "down":
 			m.playlist.list.CursorDown()
