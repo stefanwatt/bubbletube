@@ -2,12 +2,14 @@ package main
 
 type SongItem struct {
 	ID        string
+	VideoID   string
 	TitleText string
 }
 
-func NewSongItem(id string, title string, description string) SongItem {
+func NewSongItem(id string, title string, videoID string) SongItem {
 	return SongItem{
 		ID:        id,
+		VideoID:   videoID,
 		TitleText: title,
 	}
 }

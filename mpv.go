@@ -39,7 +39,7 @@ var (
 	started           = false
 )
 
-func PlaySong(item PlaylistItem) {
+func PlaySong(item SongItem) {
 	if started || (currentMPVProcess != nil && currentMPVProcess.Process != nil) {
 		fmt.Println("Already playing")
 		return
@@ -50,7 +50,7 @@ func PlaySong(item PlaylistItem) {
 		"mpv",
 		"--input-unix-socket=/tmp/mpv_socket",
 		"--no-video",
-		"https://www.youtube.com/watch?v="+item.Snippet.ResourceID.VideoID,
+		"https://www.youtube.com/watch?v="+item.VideoID,
 	)
 	currentMPVProcess.Start()
 	if conn == nil {

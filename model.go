@@ -43,17 +43,6 @@ func (m model) SelectPlaylist() tea.Cmd {
 	return nil
 }
 
-func (m model) SelectSong() tea.Cmd {
-	// song, err := Find(m.playlist.list.Items(), func(i list.Item) bool {
-	// 	return i.(SongItem).ID == m.choice
-	// })
-	// if err != nil {
-	// 	return nil
-	// }
-	// PlaySong(song.(SongItem))
-	return nil
-}
-
 func MapPlaylistDetailModel(playlistId string) list.Model {
 	items := []list.Item{}
 	res := getSongsOfPlaylist(playlistId)
@@ -61,6 +50,7 @@ func MapPlaylistDetailModel(playlistId string) list.Model {
 		songItem := SongItem{
 			ID:        song.ID,
 			TitleText: song.Snippet.Title,
+			VideoID:   song.Snippet.ResourceID.VideoID,
 		}
 		items = append(items, songItem)
 	}

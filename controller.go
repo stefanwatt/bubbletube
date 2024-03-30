@@ -54,8 +54,16 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			m.quitting = true
+			m.choice = ""
 			return m, tea.Quit
-
+		case "down":
+			m.playlist.list.CursorDown()
+			m.choice = ""
+			return m, nil
+		case "up":
+			m.playlist.list.CursorUp()
+			m.choice = ""
+			return m, nil
 		case "p":
 			TogglePlayback()
 			return m, nil
@@ -64,9 +72,10 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.choice = ""
 			return m, nil
 		case "enter":
-			i, ok := m.playlist.list.SelectedItem().(YTPlaylist) // TODO this is the wrong model
+			i, ok := m.playlist.list.SelectedItem().(SongItem) // TODO this is the wrong model
 			if ok {
 				m.playlist.choice = string(i.ID)
+				PlaySong(i)
 			}
 			return m, nil
 		}
