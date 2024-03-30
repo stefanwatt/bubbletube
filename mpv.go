@@ -46,7 +46,12 @@ func PlaySong(item PlaylistItem) {
 	}
 	fmt.Println("Starting playback")
 	started = true
-	currentMPVProcess := exec.Command("mpv", "--input-unix-socket=/tmp/mpv_socket", "--no-video", "https://www.youtube.com/watch?v="+item.Snippet.ResourceID.VideoID)
+	currentMPVProcess := exec.Command(
+		"mpv",
+		"--input-unix-socket=/tmp/mpv_socket",
+		"--no-video",
+		"https://www.youtube.com/watch?v="+item.Snippet.ResourceID.VideoID,
+	)
 	currentMPVProcess.Start()
 	if conn == nil {
 		time.Sleep(1 * time.Second)

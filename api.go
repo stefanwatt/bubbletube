@@ -88,7 +88,7 @@ func getPlaylists() YouTubePlaylistListResponse {
 	return playlistResponse
 }
 
-type PlaylistItemListResponse struct {
+type SongsOfPlaylistResponse struct {
 	Kind          string         `json:"kind"`
 	Etag          string         `json:"etag"`
 	NextPageToken string         `json:"nextPageToken"`
@@ -105,14 +105,14 @@ type PlaylistItem struct {
 
 type ItemSnippet struct {
 	PublishedAt  time.Time  `json:"publishedAt"`
+	ResourceID   ResourceID `json:"resourceId"`
 	ChannelID    string     `json:"channelId"`
 	Title        string     `json:"title"`
 	Description  string     `json:"description"`
-	Thumbnails   Thumbnails `json:"thumbnails"`
 	ChannelTitle string     `json:"channelTitle"`
 	PlaylistID   string     `json:"playlistId"`
+	Thumbnails   Thumbnails `json:"thumbnails"`
 	Position     int        `json:"position"`
-	ResourceID   ResourceID `json:"resourceId"`
 }
 
 type ResourceID struct {
@@ -120,13 +120,13 @@ type ResourceID struct {
 	VideoID string `json:"videoId"`
 }
 
-func getPlaylistItems(playlistID string) PlaylistItemListResponse {
+func getSongsOfPlaylist(playlistID string) SongsOfPlaylistResponse {
 	oauthToken := os.Getenv("OAUTH_TOKEN")
 	if oauthToken == "" {
 		log.Fatal("OAUTH_TOKEN is not set")
 	}
 	client := &http.Client{}
-	url := fmt.Sprintf("https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=%s&key=%s", playlistID, oauthToken)
+	url := fmt.Sprintf("https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=%s&key=%s", playlistID, oauthToken)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -144,10 +144,10 @@ func getPlaylistItems(playlistID string) PlaylistItemListResponse {
 		log.Fatal(err)
 	}
 
-	var playlistItemResponse PlaylistItemListResponse
-	err = json.Unmarshal(body, &playlistItemResponse)
+	var res SongsOfPlaylistResponse
+	err = json.Unmarshal(body, &res)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return playlistItemResponse
+	return res
 }
