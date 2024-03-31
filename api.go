@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -59,16 +58,16 @@ type Localized struct {
 }
 
 func getPlaylists() YouTubePlaylistListResponse {
-	oauthToken := os.Getenv("OAUTH_TOKEN")
-	if oauthToken == "" {
-		log.Fatal("API_KEY is not set")
-	}
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&maxResults=50&mine=true&key="+oauthToken, nil)
+	req, err := http.NewRequest(
+		"GET",
+		"https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&maxResults=50&mine=true&key="+currentToken.AccessToken,
+		nil,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Add("Authorization", "Bearer "+oauthToken)
+	req.Header.Add("Authorization", "Bearer "+currentToken.AccessToken)
 	req.Header.Add("Accept", "application/json")
 
 	resp, err := client.Do(req)
@@ -121,17 +120,16 @@ type ResourceID struct {
 }
 
 func getSongsOfPlaylist(playlistID string) SongsOfPlaylistResponse {
-	oauthToken := os.Getenv("OAUTH_TOKEN")
-	if oauthToken == "" {
-		log.Fatal("OAUTH_TOKEN is not set")
-	}
 	client := &http.Client{}
-	url := fmt.Sprintf("https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=%s&key=%s", playlistID, oauthToken)
+	url := fmt.Sprintf("https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=%s&key=%s",
+		playlistID,
+		currentToken.AccessToken,
+	)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	req.Header.Add("Authorization", "Bearer "+oauthToken)
+	req.Header.Add("Authorization", "Bearer "+currentToken.AccessToken)
 	req.Header.Add("Accept", "application/json")
 
 	resp, err := client.Do(req)

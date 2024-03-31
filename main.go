@@ -28,6 +28,18 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+
+	// if len(os.Args) > 1 && os.Args[1] == "auth" {
+	// 	if err := Authenticate(); err != nil {
+	// 		log.Fatalf("Failed to authenticate: %v", err)
+	// 	}
+	// 	return
+	// }
+
+	if err := Authenticate(); err != nil {
+		log.Fatalf("Failed to authenticate: %v", err)
+	}
+
 	l := MapPlaylistModel()
 	m := model{list: l}
 	program = tea.NewProgram(m)

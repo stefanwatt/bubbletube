@@ -9,8 +9,8 @@
    -- ( ) search bar
    -- ( ) currently playing song + artist + album 
    -- ( ) playback progress bar + play/pause indicator
-   -- ( ) timer
-   -- ( ) volume
+   -- (x) timer
+   -- (x) volume
    - ( ) shuffle
    - ( ) autoplay next song
 ** Dependencies
