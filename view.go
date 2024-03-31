@@ -11,7 +11,25 @@ import (
 
 func (m model) View() string {
 	if m.playlist != nil {
-		return "\n" + m.playlist.list.View()
+		res := "\n" + m.playlist.list.View()
+		if m.playlist != nil {
+			totalSeconds := int(m.playlist.duration)
+			minutesDuration := totalSeconds / 60
+			secondsDuration := totalSeconds % 60
+			totalSeconds = int(m.playlist.timePos)
+			minutesPassed := totalSeconds / 60
+			secondsPassed := totalSeconds % 60
+
+			res = res + "\n" + m.playlist.playbackProgress.View() + "\n" +
+
+				fmt.Sprintf("%d:%02d/%d:%02d Volume: %d ",
+					minutesPassed,
+					secondsPassed,
+					minutesDuration,
+					secondsDuration,
+					int(m.playlist.volume)) + "\n"
+		}
+		return res
 	}
 	if m.quitting {
 		return quitTextStyle.Render("Bye")

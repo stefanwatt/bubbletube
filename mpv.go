@@ -10,7 +10,28 @@ import (
 	"time"
 
 	"github.com/DexterLB/mpvipc"
+	tea "github.com/charmbracelet/bubbletea"
 )
+
+type MPVEventFloat struct {
+	ID    int64
+	Value float64
+}
+
+func mpvEventCmd(event mpvipc.Event) tea.Cmd {
+	return func() tea.Msg {
+		if event.Data == nil {
+			return MPVEventFloat{
+				ID:    event.ID,
+				Value: 0,
+			}
+		}
+		return MPVEventFloat{
+			ID:    event.ID,
+			Value: event.Data.(float64),
+		}
+	}
+}
 
 var (
 	conn    *mpvipc.Connection
@@ -23,9 +44,39 @@ func initConn() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = conn.Call("observe_property", 42, "volume")
+	events, stopListening := conn.NewEventListener()
+	_, err = conn.Call("observe_property", 1, "volume")
 	if err != nil {
 		fmt.Print(err)
+	}
+
+	_, err = conn.Call("observe_property", 2, "duration")
+	if err != nil {
+		fmt.Print(err)
+	}
+	_, err = conn.Call("observe_property", 3, "percent-pos")
+	if err != nil {
+		fmt.Print(err)
+	}
+	_, err = conn.Call("observe_property", 4, "time-pos")
+	if err != nil {
+		fmt.Print(err)
+	}
+	_, err = conn.Call("observe_property", 5, "time-remaining")
+	if err != nil {
+		fmt.Print(err)
+	}
+	go func() {
+		conn.WaitUntilClosed()
+		stopListening <- struct{}{}
+	}()
+
+	for event := range events {
+		switch event.ID {
+		case 1, 2, 3, 4, 5:
+			msg := mpvEventCmd(*event)().(MPVEventFloat)
+			program.Send(msg)
+		}
 	}
 }
 
@@ -80,7 +131,9 @@ func PlaySong(item SongItem) {
 
 	if conn == nil {
 		time.Sleep(1 * time.Second)
-		initConn()
+		go func() {
+			initConn()
+		}()
 	}
 	go func() {
 		if err := currentMPVProcess.Wait(); err != nil {

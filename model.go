@@ -4,13 +4,21 @@ import (
 	"fmt"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type PlaylistModel struct {
-	list   list.Model
-	ID     string
-	choice string
+	list             list.Model
+	ID               string
+	choice           string
+	playbackProgress progress.Model
+	volumeProgress   progress.Model
+	volume           float64
+	percent          float64
+	duration         float64
+	timePos          float64
+	timeRemaining    float64
 }
 
 type model struct {

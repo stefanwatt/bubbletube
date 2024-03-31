@@ -1,10 +1,13 @@
 * BubbleTube
 ** TODO
+   - ( ) clean up types and naming
    - (x) kill mpv process when go process dies
    - (x) display list of songs of playlist in a new view when playlist is selected
    - (x) play pause doesnt work on first press
+   - ( ) select different song while there's already one playing
    - ( ) add ui
    -- ( ) search bar
+   -- ( ) currently playing song + artist + album 
    -- ( ) playback progress bar + play/pause indicator
    -- ( ) timer
    -- ( ) volume

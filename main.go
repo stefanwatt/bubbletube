@@ -20,6 +20,7 @@ var (
 	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 	defaultWidth      = 100
 	defaultHeight     = 14
+	program           *tea.Program
 )
 
 func main() {
@@ -29,7 +30,8 @@ func main() {
 	}
 	l := MapPlaylistModel()
 	m := model{list: l}
-	if _, err := tea.NewProgram(m).Run(); err != nil {
+	program = tea.NewProgram(m)
+	if _, err = program.Run(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}

@@ -17,7 +17,6 @@ func updateListView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
 		return m, nil
-
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
@@ -49,6 +48,21 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetWidth(msg.Width)
+		return m, nil
+	case MPVEventFloat:
+		switch msg.ID {
+		case 1:
+			m.playlist.volume = msg.Value
+		case 2:
+			m.playlist.duration = msg.Value
+		case 3:
+			m.playlist.percent = msg.Value
+			m.playlist.playbackProgress.SetPercent(msg.Value)
+		case 4:
+			m.playlist.timePos = msg.Value
+		case 5:
+			m.playlist.timeRemaining = msg.Value
+		}
 		return m, nil
 
 	case tea.KeyMsg:
