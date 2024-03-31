@@ -35,75 +35,97 @@ func mpvEventCmd(event mpvipc.Event) tea.Cmd {
 }
 
 var (
-	conn           *mpvipc.Connection
-	playing        = false
-	volume         = 0.0
-	time_remaining = 0.0
-	time_pos       = 0.0
+	conn              *mpvipc.Connection
+	playing           = false
+	volume            = 0.0
+	time_remaining    = 0.0
+	time_pos          = 0.0
+	currentMPVProcess *exec.Cmd
+	started           = false
 )
 
-func initConn() {
+func InitMpvConn() {
+	// Start MPV process with idle flag and no video
+	started = true
+	currentMPVProcess = exec.Command(
+		"mpv",
+		"--idle",
+		"--input-unix-socket=/tmp/mpv_socket",
+		"--no-video",
+	)
+	if err := currentMPVProcess.Start(); err != nil {
+		fmt.Printf("Failed to start MPV: %v\n", err)
+		return
+	}
+	time.Sleep(1 * time.Second)
 	conn = mpvipc.NewConnection("/tmp/mpv_socket")
 	err := conn.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
-	events, stopListening := conn.NewEventListener()
-	_, err = conn.Call("observe_property", 1, "volume")
-	if err != nil {
-		fmt.Print(err)
-	}
 
-	_, err = conn.Call("observe_property", 2, "duration")
-	if err != nil {
-		fmt.Print(err)
-	}
-	_, err = conn.Call("observe_property", 3, "percent-pos")
-	if err != nil {
-		fmt.Print(err)
-	}
-	_, err = conn.Call("observe_property", 4, "time-pos")
-	if err != nil {
-		fmt.Print(err)
-	}
-	_, err = conn.Call("observe_property", 5, "time-remaining")
-	if err != nil {
-		fmt.Print(err)
-	}
+	// Handle MPV events
+	events, stopListening := conn.NewEventListener()
+	go func() {
+		for event := range events {
+			msg := mpvEventCmd(*event)().(MPVEventFloat)
+			program.Send(msg)
+		}
+	}()
+
 	go func() {
 		conn.WaitUntilClosed()
 		stopListening <- struct{}{}
 	}()
 
-	for event := range events {
-		switch event.ID {
-		case 1, 2, 3, 4, 5:
-			msg := mpvEventCmd(*event)().(MPVEventFloat)
-			program.Send(msg)
-		}
+	// Observe properties
+	observeProperties()
 
-		if event.Data == nil {
-			return
+	// Setup signal handling to cleanly exit MPV on interrupt
+	setupSignalHandling()
+}
+
+func observeProperties() {
+	properties := []string{"volume", "duration", "percent-pos", "time-pos", "time-remaining"}
+	for id, prop := range properties {
+		if _, err := conn.Call("observe_property", id+1, prop); err != nil {
+			fmt.Println(err)
 		}
-		switch event.ID {
-		case 1:
-			volume = event.Data.(float64)
-		case 4:
-			time_pos = event.Data.(float64)
-		case 5:
-			time_remaining = event.Data.(float64)
+	}
+}
+
+func setupSignalHandling() {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		for range sigChan {
+			KillMpv()
 		}
+	}()
+}
+
+func SelectSong(item SongItem) {
+	if conn == nil {
+		fmt.Println("MPV not started")
+		return
+	}
+
+	// Load and play the selected song
+	_, err := conn.Call("loadfile", "https://www.youtube.com/watch?v="+item.VideoID, "replace")
+	if err != nil {
+		fmt.Printf("Failed to load song: %v\n", err)
 	}
 }
 
 func TogglePlayback() {
 	playing = !playing
-	err := conn.Set("pause", playing)
-	if err != nil {
+	if err := conn.Set("pause", playing); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// VolumeUp, VolumeDown, SkipForward, SkipBackward remain unchanged
 func VolumeUp() {
 	if conn == nil {
 		fmt.Println("MPV not started")
@@ -154,11 +176,6 @@ func SkipBackward() {
 	}
 }
 
-var (
-	currentMPVProcess *exec.Cmd
-	started           = false
-)
-
 func KillMpv() {
 	if currentMPVProcess == nil || currentMPVProcess.Process == nil {
 		fmt.Println("MPV process not found")
@@ -168,44 +185,4 @@ func KillMpv() {
 	if err := currentMPVProcess.Process.Kill(); err != nil {
 		fmt.Printf("Failed to kill MPV process: %v\n", err)
 	}
-}
-
-func PlaySong(item SongItem) {
-	started = true
-	currentMPVProcess = exec.Command(
-		"mpv",
-		"--input-unix-socket=/tmp/mpv_socket",
-		"--no-video",
-		"https://www.youtube.com/watch?v="+item.VideoID,
-	)
-	if err := currentMPVProcess.Start(); err != nil {
-		fmt.Printf("Failed to start MPV: %v\n", err)
-		return
-	}
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		for {
-			sig := <-sigChan
-			switch sig {
-			case syscall.SIGINT, syscall.SIGTERM:
-				KillMpv()
-			}
-		}
-	}()
-
-	if conn == nil {
-		time.Sleep(1 * time.Second)
-		go func() {
-			initConn()
-		}()
-	}
-	go func() {
-		if err := currentMPVProcess.Wait(); err != nil {
-			fmt.Printf("MPV process exited with error: %v\n", err)
-		} else {
-			fmt.Println("MPV process exited normally")
-		}
-	}()
 }

@@ -36,6 +36,7 @@ func main() {
 	// 	return
 	// }
 
+	go InitMpvConn()
 	if err := Authenticate(); err != nil {
 		log.Fatalf("Failed to authenticate: %v", err)
 	}

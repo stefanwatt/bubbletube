@@ -1,6 +1,9 @@
 package main
 
 import (
+	"math"
+
+	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -47,7 +50,8 @@ func updateListView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
+		m.playlist.list.SetWidth(msg.Width)
+		m.playlist.playbackProgress.Width = msg.Width
 		return m, nil
 	case MPVEventFloat:
 		switch msg.ID {
@@ -56,14 +60,21 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case 2:
 			m.playlist.duration = msg.Value
 		case 3:
-			m.playlist.percent = msg.Value
-			m.playlist.playbackProgress.SetPercent(msg.Value)
+			percent := msg.Value / 100
+			m.playlist.percent = math.Floor(msg.Value)
+			cmd := m.playlist.playbackProgress.SetPercent(percent)
+			return m, cmd
 		case 4:
 			m.playlist.timePos = msg.Value
 		case 5:
 			m.playlist.timeRemaining = msg.Value
 		}
 		return m, nil
+
+	case progress.FrameMsg:
+		progressModel, cmd := m.playlist.playbackProgress.Update(msg)
+		m.playlist.playbackProgress = progressModel.(progress.Model)
+		return m, cmd
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -107,7 +118,11 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			i, ok := m.playlist.list.SelectedItem().(SongItem)
 			if ok {
 				m.playlist.choice = string(i.ID)
-				PlaySong(i)
+				m.playlist.playbackProgress = progress.New(progress.WithDefaultGradient())
+				m.playlist.playbackProgress.Full = '━'
+				m.playlist.playbackProgress.Empty = '─'
+				m.playlist.playbackProgress.ShowPercentage = false
+				SelectSong(i)
 			}
 			return m, nil
 		}
