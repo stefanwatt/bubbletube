@@ -72,6 +72,22 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.choice = ""
 			KillMpv()
 			return m, tea.Quit
+		case "ctrl+down":
+			go VolumeDown()
+			m.playlist.volume = m.playlist.volume - 5
+			return m, nil
+		case "ctrl+up":
+			go VolumeUp()
+			m.playlist.volume = m.playlist.volume + 5
+			return m, nil
+		case "left":
+			go SkipBackward()
+			m.playlist.timePos = m.playlist.timePos - 10
+			return m, nil
+		case "right":
+			go SkipForward()
+			m.playlist.timePos = m.playlist.timePos + 10
+			return m, nil
 		case "down":
 			m.playlist.list.CursorDown()
 			m.choice = ""
@@ -88,7 +104,7 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			m.choice = ""
 			return m, nil
 		case "enter":
-			i, ok := m.playlist.list.SelectedItem().(SongItem) // TODO this is the wrong model
+			i, ok := m.playlist.list.SelectedItem().(SongItem)
 			if ok {
 				m.playlist.choice = string(i.ID)
 				PlaySong(i)

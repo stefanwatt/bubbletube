@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -34,8 +35,11 @@ func mpvEventCmd(event mpvipc.Event) tea.Cmd {
 }
 
 var (
-	conn    *mpvipc.Connection
-	playing = false
+	conn           *mpvipc.Connection
+	playing        = false
+	volume         = 0.0
+	time_remaining = 0.0
+	time_pos       = 0.0
 )
 
 func initConn() {
@@ -77,6 +81,18 @@ func initConn() {
 			msg := mpvEventCmd(*event)().(MPVEventFloat)
 			program.Send(msg)
 		}
+
+		if event.Data == nil {
+			return
+		}
+		switch event.ID {
+		case 1:
+			volume = event.Data.(float64)
+		case 4:
+			time_pos = event.Data.(float64)
+		case 5:
+			time_remaining = event.Data.(float64)
+		}
 	}
 }
 
@@ -85,6 +101,56 @@ func TogglePlayback() {
 	err := conn.Set("pause", playing)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func VolumeUp() {
+	if conn == nil {
+		fmt.Println("MPV not started")
+		return
+	}
+	volume = volume + 5
+	err := conn.Set("volume", volume)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func VolumeDown() {
+	if conn == nil {
+		fmt.Println("MPV not started")
+		return
+	}
+	volume = volume - 5
+	err := conn.Set("volume", volume)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func SkipForward() {
+	if conn == nil {
+		fmt.Println("MPV not started")
+		return
+	}
+	skipBy := math.Floor(math.Min(10, time_remaining))
+
+	_, err := conn.Call("seek", skipBy, "relative", "exact")
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func SkipBackward() {
+	if conn == nil {
+		fmt.Println("MPV not started")
+		return
+	}
+
+	skipBy := -math.Floor(math.Min(10, time_pos))
+	_, err := conn.Call("seek", skipBy, "relative", "exact")
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 

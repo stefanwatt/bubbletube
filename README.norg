@@ -1,6 +1,11 @@
 * BubbleTube
 ** TODO
-   - ( ) clean up types and naming
+
+   - (x) oauth
+   - ( ) clean up model
+   -- ( ) type naming should be consistent
+   -- ( ) do a mapping between the api response and the model -> only store whats needed
+   -- ( ) store the full model in the bubbletea model
    - (x) kill mpv process when go process dies
    - (x) display list of songs of playlist in a new view when playlist is selected
    - (x) play pause doesnt work on first press
