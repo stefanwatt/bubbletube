@@ -1,0 +1,29 @@
+* BubbleTube
+** (-) TODO
+
+
+*** (x) MPV
+**** (x) init on startup instead when first song is selected
+**** (x) select different song while there's already one playing
+*** ( ) OAUTH
+**** ( ) make it less annoying -> always closing the browser 
+*** (-) UI
+**** ( ) search bar
+**** ( ) currently playing song + artist + album 
+**** (x) playback progress bar
+**** ( ) play/pause indicator
+**** (x) timer
+**** (x) volume
+*** (-) UX
+**** ( ) shuffle
+**** ( ) autoplay next song
+**** (x) kill mpv process when go process dies
+**** (x) display list of songs of playlist in a new view when playlist is selected
+**** (x) play pause doesnt work on first press
+*** (!) REFACTORING
+
+**** (!) clean up model
+**** (!) type naming should be consistent
+**** (!) do a mapping between the api response and the model -> only store whats needed
+**** (!) store the full model in the bubbletea model
+
