@@ -1,4 +1,4 @@
-package main
+package model
 
 import (
 	"fmt"
@@ -44,7 +44,7 @@ var (
 	started           = false
 )
 
-func InitMpvConn() {
+func InitMpvConn(program *tea.Program) {
 	// Start MPV process with idle flag and no video
 	started = true
 	currentMPVProcess = exec.Command(
