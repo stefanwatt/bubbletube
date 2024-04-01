@@ -12,15 +12,19 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 )
 
-func View(m model.Screen) string {
-	padding := getPaddingLeft(m)
-	if m.Playlist != nil {
-		return applyPaddingToView("\n"+renderPlaylist(m), padding)
-	}
-	if m.Quitting {
+func View(screen model.Screen) string {
+	if screen.Quitting {
 		return config.QuitTextStyle.Render("Bye")
 	}
-	return applyPaddingToView("\n"+m.List.View(), padding)
+	padding := getPaddingLeft(screen)
+	res := ""
+	switch screen.CenterPanel.(type) {
+	case *model.PlaylistsPanel:
+		res = res + applyPaddingToView(renderPlaylistsPanel(screen), padding)
+	case *model.PlaylistDetailPanel:
+		res = res + applyPaddingToView(renderPlaylistDetailPanel(screen), padding)
+	}
+	return res + applyPaddingToView(renderSongControls(screen), padding)
 }
 
 func applyPaddingToView(view string, paddingLeft string) string {
@@ -31,36 +35,50 @@ func applyPaddingToView(view string, paddingLeft string) string {
 	return strings.Join(lines, "\n") // Join the lines back together
 }
 
-func getPaddingLeft(m model.Screen) string {
+func getPaddingLeft(screen model.Screen) string {
 	spaces := 0
-	if m.WindowWidth > 80 {
-		spaces = int(math.Floor(float64(m.WindowWidth-80) / 2))
+	if screen.WindowWidth > 80 {
+		spaces = int(math.Floor(float64(screen.WindowWidth-80) / 2))
 	}
 	return strings.Repeat(" ", spaces)
 }
 
-func renderPlaylist(m model.Screen) string {
-	res := "\n" + m.Playlist.List.View()
-	if m.Playlist.PlayingSong != nil {
-		res += renderSongControls(m)
+func renderPlaylistsPanel(screen model.Screen) string {
+	playlists, ok := screen.CenterPanel.(*model.PlaylistsPanel)
+	if !ok {
+		panic("Expected PlaylistsPanel")
 	}
-	return res
+	return "\n" + playlists.List.View()
 }
 
-func renderSongControls(m model.Screen) string {
-	progressLabel := formatProgressLabel(m)
-	volumeProgress := formatVolumeProgress(m)
-	playPause := getPlayPauseIcon(m)
-
-	m.Playlist.PlaybackProgress.Width = m.Playlist.List.Width() - len(progressLabel) - 20 - len(playPause)
-	playbackProgressLine := "\n" + playPause + m.Playlist.PlaybackProgress.View()
-
-	return "\n  " + m.Playlist.PlayingSong.TitleText + playbackProgressLine + progressLabel + volumeProgress
+func renderPlaylistDetailPanel(screen model.Screen) string {
+	playlistDetail, ok := screen.CenterPanel.(*model.PlaylistDetailPanel)
+	if !ok {
+		panic("Expected PlaylistDetailPanel")
+	}
+	return "\n" + playlistDetail.List.View()
 }
 
-func formatProgressLabel(m model.Screen) string {
-	minutesPassed, secondsPassed := formatTime(int(m.Playlist.TimePos))
-	minutesDuration, secondsDuration := formatTime(int(m.Playlist.Duration))
+func renderSongControls(screen model.Screen) string {
+	progressLabel := formatProgressLabel(screen)
+	volumeProgress := formatVolumeProgress(screen)
+	playPause := getPlayPauseIcon(screen)
+	screen.PlaybackControls.PlaybackProgress.Width = screen.CenterPanel.GetList().Width() - len(progressLabel) - 20 - len(playPause)
+	playbackProgressLine := "\n" + playPause + screen.PlaybackControls.PlaybackProgress.View()
+	songTitle := renderSongTitle(screen)
+	return "\n" + songTitle + playbackProgressLine + progressLabel + volumeProgress
+}
+
+func renderSongTitle(screen model.Screen) string {
+	if screen.PlaybackControls.PlayingSong == nil {
+		return ""
+	}
+	return "  " + screen.PlaybackControls.PlayingSong.TitleText
+}
+
+func formatProgressLabel(screen model.Screen) string {
+	minutesPassed, secondsPassed := formatTime(int(screen.PlaybackControls.TimePos))
+	minutesDuration, secondsDuration := formatTime(int(screen.PlaybackControls.Duration))
 
 	return fmt.Sprintf(" %d:%02d/%d:%02d ", minutesPassed, secondsPassed, minutesDuration, secondsDuration)
 }
@@ -71,23 +89,23 @@ func formatTime(totalSeconds int) (int, int) {
 	return minutes, seconds
 }
 
-func formatVolumeProgress(m model.Screen) string {
-	m.Playlist.VolumeProgress.Width = 20 // Consider making this a constant or configurable field
-	return m.Playlist.VolumeProgress.View()
+func formatVolumeProgress(screen model.Screen) string {
+	screen.PlaybackControls.VolumeProgress.Width = 20 // Consider making this a constant or configurable field
+	return screen.PlaybackControls.VolumeProgress.View()
 }
 
-func getPlayPauseIcon(m model.Screen) string {
-	if m.Playlist.PlayingSong == nil {
+func getPlayPauseIcon(screen model.Screen) string {
+	if screen.PlaybackControls.PlayingSong == nil {
 		return ""
 	}
-	if m.Playlist.Playing {
+	if screen.PlaybackControls.Playing {
 		return "  "
 	}
 	return "  "
 }
 
 func RenderPlaylist(d list.ItemDelegate, w io.Writer, m list.Model, index int, listItem list.Item) {
-	ytItem, ok := listItem.(model.YTPlaylist)
+	ytItem, ok := listItem.(model.Playlist)
 	if !ok {
 		return
 	}

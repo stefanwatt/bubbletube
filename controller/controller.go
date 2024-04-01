@@ -14,7 +14,7 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		sc.Screen.WindowWidth = msg.Width
 		sc.Screen.WindowHeight = msg.Height
-		sc.Screen.List.SetWidth(80)
+		sc.Screen.CenterPanel.GetList().SetWidth(80)
 		return sc, nil
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -24,51 +24,69 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 			return sc, tea.Quit
 
 		case "enter":
-			i, ok := sc.Screen.List.SelectedItem().(model.YTPlaylist)
+			i, ok := sc.Screen.CenterPanel.GetList().SelectedItem().(model.Playlist)
 			if ok {
-				sc.Screen.Choice = &i
+				sc.Screen.CenterPanel.SetChoice(i)
 			}
-			l := model.MapPlaylistDetailModel(sc.SongDelegate, sc.Screen.Choice.ID)
-			sc.Screen.Playlist = &model.PlaylistModel{
-				List: l,
-				ID:   sc.Screen.Choice.ID,
+			var selectedPlaylist model.Playlist
+			selectedPlaylist, ok = sc.Screen.CenterPanel.GetChoice().(model.Playlist)
+			if !ok {
+				panic("Failed to cast to SongItem")
+			}
+			l := model.MapPlaylistDetailModel(sc.SongDelegate, selectedPlaylist.ID)
+			choice, ok := l.Items()[0].(model.SongItem)
+			if !ok {
+				panic("Failed to cast to SongItem")
+			}
+			sc.Screen.CenterPanel = &model.PlaylistDetailPanel{
+				List:   l,
+				Choice: choice,
+				ID:     selectedPlaylist.ID,
 			}
 			return sc, nil
 		}
 	}
 
-	var cmd tea.Cmd
-	sc.Screen.List, cmd = sc.Screen.List.Update(msg)
-	sc.Screen.Choice = nil
+	playlistsPanel, ok := sc.Screen.CenterPanel.(*model.PlaylistsPanel)
+	if !ok {
+		panic("Failed to cast to PlaylistsPanel")
+	}
+	updatedList, cmd := playlistsPanel.List.Update(msg)
+	sc.Screen.CenterPanel.SetList(updatedList)
+	sc.Screen.CenterPanel.SetChoice(nil)
 	return sc, cmd
 }
 
 func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
+	detailPanel, ok := sc.Screen.CenterPanel.(*model.PlaylistDetailPanel)
+	if !ok {
+		panic("Failed to cast to PlaylistDetailPanel")
+	}
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		sc.Screen.WindowWidth = msg.Width
 		sc.Screen.WindowHeight = msg.Height
-		sc.Screen.Playlist.List.SetWidth(80)
-		sc.Screen.Playlist.PlaybackProgress.Width = 80
+		detailPanel.List.SetWidth(80)
+		sc.Screen.PlaybackControls.PlaybackProgress.Width = 80
 		return sc, nil
 	case model.MPVEventFloat:
 		switch msg.ID {
 		case 1:
 			percent := msg.Value / 100
-			sc.Screen.Playlist.Volume = math.Floor(msg.Value)
-			cmd := sc.Screen.Playlist.VolumeProgress.SetPercent(percent)
+			sc.Screen.PlaybackControls.Volume = math.Floor(msg.Value)
+			cmd := sc.Screen.PlaybackControls.VolumeProgress.SetPercent(percent)
 			return sc, cmd
 		case 2:
-			sc.Screen.Playlist.Duration = msg.Value
+			sc.Screen.PlaybackControls.Duration = msg.Value
 		case 3:
 			percent := msg.Value / 100
-			sc.Screen.Playlist.Percent = math.Floor(msg.Value)
-			cmd := sc.Screen.Playlist.PlaybackProgress.SetPercent(percent)
+			sc.Screen.PlaybackControls.Percent = math.Floor(msg.Value)
+			cmd := sc.Screen.PlaybackControls.PlaybackProgress.SetPercent(percent)
 			return sc, cmd
 		case 4:
-			sc.Screen.Playlist.TimePos = msg.Value
+			sc.Screen.PlaybackControls.TimePos = msg.Value
 		case 5:
-			sc.Screen.Playlist.TimeRemaining = msg.Value
+			sc.Screen.PlaybackControls.TimeRemaining = msg.Value
 		}
 		return sc, nil
 
@@ -79,11 +97,11 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 			updatedModel tea.Model
 		)
 
-		updatedModel, cmd = sc.Screen.Playlist.PlaybackProgress.Update(msg)
+		updatedModel, cmd = sc.Screen.PlaybackControls.PlaybackProgress.Update(msg)
 		cmds = append(cmds, cmd)
-		sc.Screen.Playlist.PlaybackProgress = updatedModel.(progress.Model)
-		updatedModel, cmd = sc.Screen.Playlist.VolumeProgress.Update(msg)
-		sc.Screen.Playlist.VolumeProgress = updatedModel.(progress.Model)
+		sc.Screen.PlaybackControls.PlaybackProgress = updatedModel.(progress.Model)
+		updatedModel, cmd = sc.Screen.PlaybackControls.VolumeProgress.Update(msg)
+		sc.Screen.PlaybackControls.VolumeProgress = updatedModel.(progress.Model)
 		cmds = append(cmds, cmd)
 		return sc, tea.Batch(cmds...)
 
@@ -91,58 +109,70 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			sc.Screen.Quitting = true
-			sc.Screen.Choice = nil
+			detailPanel.SetChoice(nil)
 			model.KillMpv()
 			return sc, tea.Quit
 		case "ctrl+down":
 			model.VolumeDown()
-			sc.Screen.Playlist.Volume = sc.Screen.Playlist.Volume - 5
+			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume - 5
 			return sc, nil
 		case "ctrl+up":
 			model.VolumeUp()
-			sc.Screen.Playlist.Volume = sc.Screen.Playlist.Volume + 5
+			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume + 5
 			return sc, nil
 		case "left":
 			model.SkipBackward()
-			sc.Screen.Playlist.TimePos = sc.Screen.Playlist.TimePos - 10
+			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos - 10
 			return sc, nil
 		case "right":
 			model.SkipForward()
-			sc.Screen.Playlist.TimePos = sc.Screen.Playlist.TimePos + 10
+			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos + 10
 			return sc, nil
 		case "down":
-			sc.Screen.Playlist.List.CursorDown()
-			selectedItem, ok := sc.Screen.Playlist.List.SelectedItem().(model.SongItem)
+			detailPanel.List.CursorDown()
+			selectedItem, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			if ok {
-				sc.Screen.Playlist.Choice = selectedItem
+				detailPanel.Choice = selectedItem
 			}
 			return sc, nil
 		case "up":
-			sc.Screen.Playlist.List.CursorUp()
-			selectedItem, ok := sc.Screen.Playlist.List.SelectedItem().(model.SongItem)
+			detailPanel.List.CursorUp()
+			selectedItem, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			if ok {
-				sc.Screen.Playlist.Choice = selectedItem
+				detailPanel.Choice = selectedItem
 			}
 			return sc, nil
 		case "p":
-			sc.Screen.Playlist.Playing = !model.TogglePlayback()
+			sc.Screen.PlaybackControls.Playing = !model.TogglePlayback()
 			return sc, nil
 		case "backspace":
-			sc.Screen.Playlist = nil
+			list := model.MapPlaylistsModel(sc.PlaylistDelegate)
+			choice, ok := list.Items()[0].(model.Playlist)
+			if !ok {
+				panic("Failed to cast to Playlist")
+			}
+			sc.Screen.CenterPanel = &model.PlaylistsPanel{
+				List:   list,
+				Choice: choice,
+			}
 			return sc, nil
 		case "enter":
-			i, ok := sc.Screen.Playlist.List.SelectedItem().(model.SongItem)
+			i, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			var cmd tea.Cmd
 			if ok {
-				cmd = model.InitPlayingModel(sc.Screen, i)
+				cmd = model.InitPlayingModel(&sc.Screen, detailPanel, i)
 				model.SelectSong(i)
 			}
 			return sc, cmd
 		}
 	}
 
-	var cmd tea.Cmd
-	sc.Screen.List, cmd = sc.Screen.Playlist.List.Update(msg)
-	sc.Screen.Choice = nil
+	playlistDetailPanel, ok := sc.Screen.CenterPanel.(*model.PlaylistDetailPanel)
+	if !ok {
+		panic("Failed to cast to PlaylistsPanel")
+	}
+	updatedList, cmd := playlistDetailPanel.List.Update(msg)
+	sc.Screen.CenterPanel.SetList(updatedList)
+	sc.Screen.CenterPanel.SetChoice(nil)
 	return sc, cmd
 }

@@ -10,10 +10,10 @@ import (
 )
 
 type YouTubePlaylistListResponse struct {
-	Kind     string     `json:"kind"`
-	Etag     string     `json:"etag"`
-	Items    []Playlist `json:"items"`
-	PageInfo PageInfo   `json:"pageInfo"`
+	Kind     string       `json:"kind"`
+	Etag     string       `json:"etag"`
+	Items    []YTPlaylist `json:"items"`
+	PageInfo PageInfo     `json:"pageInfo"`
 }
 
 type PageInfo struct {
@@ -21,7 +21,7 @@ type PageInfo struct {
 	ResultsPerPage int `json:"resultsPerPage"`
 }
 
-type Playlist struct {
+type YTPlaylist struct {
 	Kind    string  `json:"kind"`
 	Etag    string  `json:"etag"`
 	ID      string  `json:"id"`

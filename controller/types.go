@@ -45,10 +45,13 @@ func (sc *ScreenController) Init() tea.Cmd {
 }
 
 func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if sc.Screen.Playlist != nil {
+	switch sc.Screen.CenterPanel.(type) {
+	case *model.PlaylistDetailPanel:
 		return updateDetailView(msg, sc)
+	case *model.PlaylistsPanel:
+		return updateListView(msg, sc)
 	}
-	return updateListView(msg, sc)
+	return sc, nil
 }
 
 func (sd PlaylistDelegate) Height() int                                     { return 1 }

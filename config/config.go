@@ -8,6 +8,7 @@ import (
 var (
 	DefaultWidth      = 100
 	DefaultHeight     = 25
+	DefaultVolume     = 50.0
 	TitleStyle        = lipgloss.NewStyle().MarginLeft(2)
 	ItemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))

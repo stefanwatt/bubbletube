@@ -24,9 +24,9 @@ func main() {
 		log.Fatalf("Failed to authenticate: %v", err)
 	}
 
-	l := model.MapPlaylistModel(controller.PlaylistDelegate{})
-	m := model.Screen{List: l}
-	sc := controller.NewScreenController(m)
+	playlists := model.MapPlaylistsModel(controller.PlaylistDelegate{})
+	screen := model.MapDefaultScreen(playlists)
+	sc := controller.NewScreenController(screen)
 
 	program = tea.NewProgram(sc)
 	go model.InitMpvConn(program)

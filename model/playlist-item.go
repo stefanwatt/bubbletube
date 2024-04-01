@@ -1,27 +1,27 @@
 package model
 
-type YTPlaylist struct {
+type Playlist struct {
 	ID              string
 	TitleText       string
 	DescriptionText string
 }
 
-func NewYTPlaylistItem(id string, title string, description string) YTPlaylist {
-	return YTPlaylist{
+func NewYTPlaylistItem(id string, title string, description string) Playlist {
+	return Playlist{
 		ID:              id,
 		TitleText:       title,
 		DescriptionText: description,
 	}
 }
 
-func (p YTPlaylist) FilterValue() string {
+func (p Playlist) FilterValue() string {
 	return p.TitleText
 }
 
-func (p YTPlaylist) Title() string {
+func (p Playlist) Title() string {
 	return p.TitleText
 }
 
-func (p YTPlaylist) Description() string {
+func (p Playlist) Description() string {
 	return p.DescriptionText
 }

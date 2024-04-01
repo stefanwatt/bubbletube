@@ -18,11 +18,48 @@ type Delegate interface {
 	UpdateDelegate(_ tea.Msg, _ *list.Model) tea.Cmd
 }
 
-type PlaylistModel struct {
-	List             list.Model
+type CenterPanel interface {
+	GetChoice() list.Item
+	SetChoice(list.Item)
+	BubbletubeCenterPanel()
+	GetList() *list.Model
+	SetList(list.Model)
+}
+
+type PlaylistDetailPanel struct {
+	List   list.Model
+	Choice SongItem
+	ID     string
+}
+
+func (p PlaylistDetailPanel) GetList() *list.Model  { return &p.List }
+func (p *PlaylistDetailPanel) SetList(l list.Model) { p.List = l }
+
+func (p PlaylistDetailPanel) GetChoice() list.Item { return p.Choice }
+func (p *PlaylistDetailPanel) SetChoice(i list.Item) {
+	if songItem, ok := i.(SongItem); ok {
+		p.Choice = songItem
+	}
+}
+func (PlaylistDetailPanel) BubbletubeCenterPanel() {}
+
+type PlaylistsPanel struct {
+	List   list.Model
+	Choice Playlist
+}
+
+func (p PlaylistsPanel) GetList() *list.Model  { return &p.List }
+func (p *PlaylistsPanel) SetList(l list.Model) { p.List = l }
+func (p PlaylistsPanel) GetChoice() list.Item  { return p.Choice }
+func (p *PlaylistsPanel) SetChoice(i list.Item) {
+	if playlists, ok := i.(Playlist); ok {
+		p.Choice = playlists
+	}
+}
+func (PlaylistsPanel) BubbletubeCenterPanel() {}
+
+type PlaybackControls struct {
 	PlayingSong      *SongItem
-	Choice           SongItem
-	ID               string
 	PlaybackProgress progress.Model
 	VolumeProgress   progress.Model
 	Volume           float64
@@ -34,12 +71,11 @@ type PlaylistModel struct {
 }
 
 type Screen struct {
-	List         list.Model
-	Playlist     *PlaylistModel
-	Choice       *YTPlaylist
-	Quitting     bool
-	WindowWidth  int
-	WindowHeight int
+	CenterPanel      CenterPanel
+	PlaybackControls PlaybackControls
+	Quitting         bool
+	WindowWidth      int
+	WindowHeight     int
 }
 
 type item string
@@ -72,11 +108,11 @@ func MapPlaylistDetailModel(songDelegate list.ItemDelegate, playlistId string) l
 	return l
 }
 
-func MapPlaylistModel(delegate list.ItemDelegate) list.Model {
+func MapPlaylistsModel(delegate list.ItemDelegate) list.Model {
 	items := []list.Item{}
 	res := getPlaylists()
 	for _, playlist := range res.Items {
-		playlistItem := YTPlaylist{
+		playlistItem := Playlist{
 			ID:              playlist.ID,
 			TitleText:       playlist.Snippet.Title,
 			DescriptionText: playlist.Snippet.Description,
@@ -94,20 +130,55 @@ func MapPlaylistModel(delegate list.ItemDelegate) list.Model {
 	return l
 }
 
-func InitPlayingModel(m Screen, i SongItem) tea.Cmd {
-	m.Playlist.Choice = i
-	m.Playlist.PlayingSong = &i
-
+func MapDefaultPlaybackProgress() progress.Model {
 	playbackProgress := progress.New(progress.WithDefaultGradient())
 	playbackProgress.Full = '━'
 	playbackProgress.Empty = '─'
 	playbackProgress.ShowPercentage = false
-	m.Playlist.PlaybackProgress = playbackProgress
+	return playbackProgress
+}
 
+func MapDefaultVolumeProgress() (progress.Model, tea.Cmd) {
 	volumeProgress := progress.New(progress.WithDefaultGradient())
 	volumeProgress.Full = '━'
 	volumeProgress.Empty = '─'
 	cmd := volumeProgress.SetPercent(0.5)
-	m.Playlist.VolumeProgress = volumeProgress
+	return volumeProgress, cmd
+}
+
+func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongItem) tea.Cmd {
+	screen.CenterPanel = &PlaylistDetailPanel{
+		ID:     detailPanel.ID,
+		List:   detailPanel.List,
+		Choice: i,
+	}
+
+	screen.PlaybackControls.PlayingSong = &i
+	screen.PlaybackControls.PlaybackProgress = MapDefaultPlaybackProgress()
+
+	var cmd tea.Cmd
+	screen.PlaybackControls.VolumeProgress, cmd = MapDefaultVolumeProgress()
 	return cmd
+}
+
+func MapDefaultScreen(playlists list.Model) Screen {
+	return Screen{
+		CenterPanel: &PlaylistsPanel{
+			List: playlists,
+		},
+		PlaybackControls: PlaybackControls{
+			TimePos:          0,
+			Volume:           config.DefaultVolume,
+			Playing:          false,
+			Duration:         0.0,
+			TimeRemaining:    0.0,
+			Percent:          0.0,
+			VolumeProgress:   progress.New(),
+			PlayingSong:      nil,
+			PlaybackProgress: progress.New(), // TODO should be mapDefault
+		},
+		Quitting:     false,
+		WindowWidth:  config.DefaultHeight,
+		WindowHeight: config.DefaultWidth,
+	}
 }
