@@ -94,3 +94,20 @@ func MapPlaylistModel() list.Model {
 	l.Styles.HelpStyle = helpStyle
 	return l
 }
+
+func InitPlayingModel(m model, i SongItem) tea.Cmd {
+	m.playlist.choice = string(i.ID)
+
+	playbackProgress := progress.New(progress.WithDefaultGradient())
+	playbackProgress.Full = '━'
+	playbackProgress.Empty = '─'
+	playbackProgress.ShowPercentage = false
+	m.playlist.playbackProgress = playbackProgress
+
+	volumeProgress := progress.New(progress.WithDefaultGradient())
+	volumeProgress.Full = '━'
+	volumeProgress.Empty = '─'
+	cmd := volumeProgress.SetPercent(0.5)
+	m.playlist.volumeProgress = volumeProgress
+	return cmd
+}

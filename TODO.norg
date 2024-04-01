@@ -2,13 +2,20 @@
 ** (-) TODO
 
 
-*** (x) MPV
+*** (-) MPV
 **** (x) init on startup instead when first song is selected
 **** (x) select different song while there's already one playing
+**** ( ) improve load time (maybe preloamaybe preloadd)
 *** ( ) OAUTH
 **** ( ) make it less annoying -> always closing the browser 
 *** (-) UI
 **** ( ) search bar
+**** (_) progress isn't animated
+     actually it is, but the playback progress never increases by multiple cells
+     there's no way to animate the single added cell in a TUI
+     the only possible animation is with multiple cells changing
+     if multiple chells are changing at one then the animation is there
+**** (x) volume progress
 **** ( ) currently playing song + artist + album 
 **** (x) playback progress bar
 **** ( ) play/pause indicator
@@ -16,6 +23,8 @@
 **** (x) volume
 *** (-) UX
 **** ( ) shuffle
+**** ( ) improve song selection / navigation 
+     maybe pressing 7 should play song #7 in the list
 **** ( ) autoplay next song
 **** (x) kill mpv process when go process dies
 **** (x) display list of songs of playlist in a new view when playlist is selected

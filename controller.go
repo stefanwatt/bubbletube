@@ -56,7 +56,10 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 	case MPVEventFloat:
 		switch msg.ID {
 		case 1:
-			m.playlist.volume = msg.Value
+			percent := msg.Value / 100
+			m.playlist.volume = math.Floor(msg.Value)
+			cmd := m.playlist.volumeProgress.SetPercent(percent)
+			return m, cmd
 		case 2:
 			m.playlist.duration = msg.Value
 		case 3:
@@ -72,9 +75,19 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case progress.FrameMsg:
-		progressModel, cmd := m.playlist.playbackProgress.Update(msg)
-		m.playlist.playbackProgress = progressModel.(progress.Model)
-		return m, cmd
+		var (
+			cmds         []tea.Cmd
+			cmd          tea.Cmd
+			updatedModel tea.Model
+		)
+
+		updatedModel, cmd = m.playlist.playbackProgress.Update(msg)
+		cmds = append(cmds, cmd)
+		m.playlist.playbackProgress = updatedModel.(progress.Model)
+		updatedModel, cmd = m.playlist.volumeProgress.Update(msg)
+		m.playlist.volumeProgress = updatedModel.(progress.Model)
+		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
 		switch keypress := msg.String(); keypress {
@@ -84,19 +97,19 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			KillMpv()
 			return m, tea.Quit
 		case "ctrl+down":
-			go VolumeDown()
+			VolumeDown()
 			m.playlist.volume = m.playlist.volume - 5
 			return m, nil
 		case "ctrl+up":
-			go VolumeUp()
+			VolumeUp()
 			m.playlist.volume = m.playlist.volume + 5
 			return m, nil
 		case "left":
-			go SkipBackward()
+			SkipBackward()
 			m.playlist.timePos = m.playlist.timePos - 10
 			return m, nil
 		case "right":
-			go SkipForward()
+			SkipForward()
 			m.playlist.timePos = m.playlist.timePos + 10
 			return m, nil
 		case "down":
@@ -116,15 +129,12 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "enter":
 			i, ok := m.playlist.list.SelectedItem().(SongItem)
+			var cmd tea.Cmd
 			if ok {
-				m.playlist.choice = string(i.ID)
-				m.playlist.playbackProgress = progress.New(progress.WithDefaultGradient())
-				m.playlist.playbackProgress.Full = '━'
-				m.playlist.playbackProgress.Empty = '─'
-				m.playlist.playbackProgress.ShowPercentage = false
+				cmd = InitPlayingModel(m, i)
 				SelectSong(i)
 			}
-			return m, nil
+			return m, cmd
 		}
 	}
 

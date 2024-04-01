@@ -20,15 +20,18 @@ func (m model) View() string {
 			minutesPassed := totalSeconds / 60
 			secondsPassed := totalSeconds % 60
 
-			m.playlist.playbackProgress.Width = m.playlist.list.Width()
-			res = res + "\n" + m.playlist.playbackProgress.View() + "\n" +
+			progressLabel := fmt.Sprintf(" %d:%02d/%d:%02d ",
+				minutesPassed,
+				secondsPassed,
+				minutesDuration,
+				secondsDuration,
+			)
 
-				fmt.Sprintf("%d:%02d/%d:%02d Volume: %d ",
-					minutesPassed,
-					secondsPassed,
-					minutesDuration,
-					secondsDuration,
-					int(m.playlist.volume)) + "\n"
+			volumeLength := 20
+			m.playlist.volumeProgress.Width = volumeLength
+			volumeProgress := m.playlist.volumeProgress.View()
+			m.playlist.playbackProgress.Width = m.playlist.list.Width() - len(progressLabel) - volumeLength
+			res = res + "\n" + m.playlist.playbackProgress.View() + progressLabel + volumeProgress + "\n"
 		}
 		return res
 	}

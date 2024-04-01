@@ -37,7 +37,7 @@ func mpvEventCmd(event mpvipc.Event) tea.Cmd {
 var (
 	conn              *mpvipc.Connection
 	playing           = false
-	volume            = 0.0
+	volume            = 50.0
 	time_remaining    = 0.0
 	time_pos          = 0.0
 	currentMPVProcess *exec.Cmd
@@ -52,6 +52,7 @@ func InitMpvConn() {
 		"--idle",
 		"--input-unix-socket=/tmp/mpv_socket",
 		"--no-video",
+		"--volume="+fmt.Sprintf("%f", volume),
 	)
 	if err := currentMPVProcess.Start(); err != nil {
 		fmt.Printf("Failed to start MPV: %v\n", err)
@@ -69,7 +70,9 @@ func InitMpvConn() {
 	go func() {
 		for event := range events {
 			msg := mpvEventCmd(*event)().(MPVEventFloat)
-			program.Send(msg)
+			if program != nil {
+				program.Send(msg)
+			}
 		}
 	}()
 
