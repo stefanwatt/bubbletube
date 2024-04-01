@@ -30,12 +30,12 @@ func updateListView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		case "enter":
 			i, ok := m.list.SelectedItem().(YTPlaylist)
 			if ok {
-				m.choice = string(i.ID)
+				m.choice = &i
 			}
-			l := MapPlaylistDetailModel(m.choice)
+			l := MapPlaylistDetailModel(m.choice.ID)
 			m.playlist = &PlaylistModel{
 				list: l,
-				ID:   m.choice,
+				ID:   m.choice.ID,
 			}
 			return m, nil
 		}
@@ -43,7 +43,7 @@ func updateListView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	m.choice = ""
+	m.choice = nil
 	return m, cmd
 }
 
@@ -93,7 +93,7 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			m.quitting = true
-			m.choice = ""
+			m.choice = nil
 			KillMpv()
 			return m, tea.Quit
 		case "ctrl+down":
@@ -114,18 +114,23 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "down":
 			m.playlist.list.CursorDown()
-			m.choice = ""
+			selectedItem, ok := m.playlist.list.SelectedItem().(SongItem)
+			if ok {
+				m.playlist.choice = selectedItem
+			}
 			return m, nil
 		case "up":
 			m.playlist.list.CursorUp()
-			m.choice = ""
+			selectedItem, ok := m.playlist.list.SelectedItem().(SongItem)
+			if ok {
+				m.playlist.choice = selectedItem
+			}
 			return m, nil
 		case "p":
-			TogglePlayback()
+			m.playlist.playing = !TogglePlayback()
 			return m, nil
 		case "backspace":
 			m.playlist = nil
-			m.choice = ""
 			return m, nil
 		case "enter":
 			i, ok := m.playlist.list.SelectedItem().(SongItem)
@@ -140,6 +145,6 @@ func updateDetailView(msg tea.Msg, m model) (tea.Model, tea.Cmd) {
 
 	var cmd tea.Cmd
 	m.list, cmd = m.playlist.list.Update(msg)
-	m.choice = ""
+	m.choice = nil
 	return m, cmd
 }

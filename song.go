@@ -4,6 +4,7 @@ type SongItem struct {
 	ID        string
 	VideoID   string
 	TitleText string
+	Artist    string
 }
 
 func NewSongItem(id string, title string, videoID string) SongItem {

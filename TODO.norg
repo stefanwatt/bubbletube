@@ -18,11 +18,19 @@
 **** (x) volume progress
 **** ( ) currently playing song + artist + album 
 **** (x) playback progress bar
-**** ( ) play/pause indicator
+**** (-) play/pause indicator
+     when the music is playing should the icon be a play or pause icon? 
+     on mouse/touch driven devices it's obviously a pause icon, because 
+     it describes the action of the button
+     in a keyboard driven TUI it's different because the icon isn't a button
+     it's merely an indicator
+     would be kinda weird to make the indicator inverted, but would 
+     also be weird to deviate from the standard
+
 **** (x) timer
 **** (x) volume
 *** (-) UX
-**** ( ) shuffle
+**** ( ) shuffle/repeat
 **** ( ) improve song selection / navigation 
      maybe pressing 7 should play song #7 in the list
 **** ( ) autoplay next song

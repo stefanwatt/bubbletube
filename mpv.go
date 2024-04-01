@@ -121,11 +121,12 @@ func SelectSong(item SongItem) {
 	}
 }
 
-func TogglePlayback() {
+func TogglePlayback() bool {
 	playing = !playing
 	if err := conn.Set("pause", playing); err != nil {
 		log.Fatal(err)
 	}
+	return playing
 }
 
 // VolumeUp, VolumeDown, SkipForward, SkipBackward remain unchanged

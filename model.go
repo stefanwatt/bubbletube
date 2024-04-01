@@ -10,8 +10,9 @@ import (
 
 type PlaylistModel struct {
 	list             list.Model
+	playingSong      *SongItem
+	choice           SongItem
 	ID               string
-	choice           string
 	playbackProgress progress.Model
 	volumeProgress   progress.Model
 	volume           float64
@@ -19,12 +20,13 @@ type PlaylistModel struct {
 	duration         float64
 	timePos          float64
 	timeRemaining    float64
+	playing          bool
 }
 
 type model struct {
 	list     list.Model
 	playlist *PlaylistModel
-	choice   string
+	choice   *YTPlaylist
 	quitting bool
 }
 
@@ -38,7 +40,7 @@ func (m model) Init() tea.Cmd {
 
 func (m model) SelectPlaylist() tea.Cmd {
 	item, err := Find(m.list.Items(), func(i list.Item) bool {
-		return i.(YTPlaylist).ID == m.choice
+		return i.(YTPlaylist).ID == m.choice.ID
 	})
 	if err != nil {
 		return nil
@@ -96,7 +98,8 @@ func MapPlaylistModel() list.Model {
 }
 
 func InitPlayingModel(m model, i SongItem) tea.Cmd {
-	m.playlist.choice = string(i.ID)
+	m.playlist.choice = i
+	m.playlist.playingSong = &i
 
 	playbackProgress := progress.New(progress.WithDefaultGradient())
 	playbackProgress.Full = '━'

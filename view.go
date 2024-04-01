@@ -30,8 +30,20 @@ func (m model) View() string {
 			volumeLength := 20
 			m.playlist.volumeProgress.Width = volumeLength
 			volumeProgress := m.playlist.volumeProgress.View()
-			m.playlist.playbackProgress.Width = m.playlist.list.Width() - len(progressLabel) - volumeLength
-			res = res + "\n" + m.playlist.playbackProgress.View() + progressLabel + volumeProgress + "\n"
+			playPause := " ▶️ "
+			if !m.playlist.playing {
+				playPause = " ⏸️ "
+			}
+			m.playlist.playbackProgress.Width = m.playlist.list.Width() - len(progressLabel) - volumeLength - len(playPause)
+			if m.playlist.playingSong != nil {
+				res = res +
+					"\n 🎵 " + m.playlist.playingSong.TitleText
+			}
+			res = res +
+				"\n" + playPause + m.playlist.playbackProgress.View() +
+				progressLabel +
+				volumeProgress
+
 		}
 		return res
 	}
@@ -72,7 +84,7 @@ func (d songDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 	if !ok {
 		return
 	}
-	str := fmt.Sprintf("%d. %s", index+1, songItem.Title())
+	str := fmt.Sprintf("%d. %s", index+1, songItem.TitleText)
 
 	fn := itemStyle.Render
 	if index == m.Index() {
