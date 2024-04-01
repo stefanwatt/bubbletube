@@ -21,7 +21,7 @@
      the only possible animation is with multiple cells changing
      if multiple chells are changing at one then the animation is there
 **** (x) volume progress
-**** ( ) currently playing song + artist + album 
+**** (x) currently playing song
 **** (x) playback progress bar
 **** (-) play/pause indicator
      when the music is playing should the icon be a play or pause icon? 
@@ -33,7 +33,8 @@
      also be weird to deviate from the standard
 
 **** (x) timer
-**** (x) volume
+**** ( ) volume
+     not working outside detail view
 *** (-) UX
 **** ( ) shuffle/repeat
 **** ( ) use fancy list example for filtering etc.

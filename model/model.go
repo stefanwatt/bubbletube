@@ -101,7 +101,6 @@ func MapPlaylistDetailModel(songDelegate list.ItemDelegate, playlistId string) l
 	l := list.New(items, songDelegate, config.DefaultWidth, config.DefaultHeight)
 	l.Title = fmt.Sprintf("%d songs", len(items))
 	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
 	l.Styles.Title = config.TitleStyle
 	l.Styles.PaginationStyle = config.PaginationStyle
 	l.Styles.HelpStyle = config.HelpStyle
@@ -123,7 +122,6 @@ func MapPlaylistsModel(delegate list.ItemDelegate) list.Model {
 	l := list.New(items, delegate, config.DefaultWidth, config.DefaultHeight)
 	l.Title = "My Playlists"
 	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
 	l.Styles.Title = config.TitleStyle
 	l.Styles.PaginationStyle = config.PaginationStyle
 	l.Styles.HelpStyle = config.HelpStyle

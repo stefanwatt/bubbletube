@@ -1,11 +1,9 @@
 package controller
 
 import (
-	"math"
-
 	model "bubbletube/model"
 
-	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -17,12 +15,14 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		sc.Screen.CenterPanel.GetList().SetWidth(80)
 		return sc, nil
 	case tea.KeyMsg:
+		if sc.Screen.CenterPanel.GetList().FilterState() == list.Filtering {
+			break
+		}
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			sc.Screen.Quitting = true
 			model.KillMpv()
 			return sc, tea.Quit
-
 		case "enter":
 			i, ok := sc.Screen.CenterPanel.GetList().SelectedItem().(model.Playlist)
 			if ok {
@@ -69,65 +69,17 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		detailPanel.List.SetWidth(80)
 		sc.Screen.PlaybackControls.PlaybackProgress.Width = 80
 		return sc, nil
-	case model.MPVEventFloat:
-		switch msg.ID {
-		case 1:
-			percent := msg.Value / 100
-			sc.Screen.PlaybackControls.Volume = math.Floor(msg.Value)
-			cmd := sc.Screen.PlaybackControls.VolumeProgress.SetPercent(percent)
-			return sc, cmd
-		case 2:
-			sc.Screen.PlaybackControls.Duration = msg.Value
-		case 3:
-			percent := msg.Value / 100
-			sc.Screen.PlaybackControls.Percent = math.Floor(msg.Value)
-			cmd := sc.Screen.PlaybackControls.PlaybackProgress.SetPercent(percent)
-			return sc, cmd
-		case 4:
-			sc.Screen.PlaybackControls.TimePos = msg.Value
-		case 5:
-			sc.Screen.PlaybackControls.TimeRemaining = msg.Value
-		}
-		return sc, nil
-
-	case progress.FrameMsg:
-		var (
-			cmds         []tea.Cmd
-			cmd          tea.Cmd
-			updatedModel tea.Model
-		)
-
-		updatedModel, cmd = sc.Screen.PlaybackControls.PlaybackProgress.Update(msg)
-		cmds = append(cmds, cmd)
-		sc.Screen.PlaybackControls.PlaybackProgress = updatedModel.(progress.Model)
-		updatedModel, cmd = sc.Screen.PlaybackControls.VolumeProgress.Update(msg)
-		sc.Screen.PlaybackControls.VolumeProgress = updatedModel.(progress.Model)
-		cmds = append(cmds, cmd)
-		return sc, tea.Batch(cmds...)
 
 	case tea.KeyMsg:
+		if detailPanel.List.FilterState() == list.Filtering {
+			break
+		}
 		switch keypress := msg.String(); keypress {
 		case "q", "ctrl+c":
 			sc.Screen.Quitting = true
 			detailPanel.SetChoice(nil)
 			model.KillMpv()
 			return sc, tea.Quit
-		case "ctrl+down":
-			model.VolumeDown()
-			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume - 5
-			return sc, nil
-		case "ctrl+up":
-			model.VolumeUp()
-			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume + 5
-			return sc, nil
-		case "left":
-			model.SkipBackward()
-			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos - 10
-			return sc, nil
-		case "right":
-			model.SkipForward()
-			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos + 10
-			return sc, nil
 		case "down":
 			detailPanel.List.CursorDown()
 			selectedItem, ok := detailPanel.List.SelectedItem().(model.SongItem)
@@ -142,9 +94,7 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 				detailPanel.Choice = selectedItem
 			}
 			return sc, nil
-		case "p":
-			sc.Screen.PlaybackControls.Playing = !model.TogglePlayback()
-			return sc, nil
+
 		case "backspace":
 			list := model.MapPlaylistsModel(sc.PlaylistDelegate)
 			choice, ok := list.Items()[0].(model.Playlist)
