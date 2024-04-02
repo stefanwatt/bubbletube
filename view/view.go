@@ -25,6 +25,7 @@ var (
 				Padding(4)
 	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(config.Colors.Peach)
 	ItemStyle         = lipgloss.NewStyle().PaddingLeft(4)
+	QueuePanelStyle   = borderStyle.Copy().Foreground(config.Colors.Text).Width(25)
 )
 
 func View(screen model.Screen) string {
@@ -45,25 +46,36 @@ func View(screen model.Screen) string {
 		Height(songControlsHeight).
 		Width(width).
 		Render(renderSongControls(screen))
-
 	centerPanelHeight := screen.WindowHeight - songControlsHeight - 4
+	queuePanel := renderQueuePanel(centerPanelHeight)
 	switch screen.CenterPanel.(type) {
 	case *model.PlaylistsPanel:
 		centerPanel = centerPanel + centerPanelStyle.
 			Copy().
-			Width(width).
+			Width(width-QueuePanelStyle.GetWidth()-2).
 			Height(centerPanelHeight).
 			Render(renderPlaylistsPanel(screen))
 	case *model.PlaylistDetailPanel:
 		centerPanel = centerPanel + centerPanelStyle.
 			Copy().
-			Width(width).
+			Width(width-QueuePanelStyle.GetWidth()-2).
 			Height(centerPanelHeight).
 			Render(renderPlaylistDetailPanel(screen))
 	}
+	centerPanel = lipgloss.JoinHorizontal(lipgloss.Right, centerPanel, queuePanel)
 	return bodyStyle.Render(
 		lipgloss.JoinVertical(lipgloss.Bottom, centerPanel, songControls),
 	)
+}
+
+func renderQueuePanel(height int) string {
+	queue := model.Queue.GetQueue()
+	res := ""
+	for _, song := range queue {
+		res = res + song.TitleText + "\n"
+	}
+	res = QueuePanelStyle.Copy().Height(height).Render(res)
+	return res
 }
 
 func renderPlaylistsPanel(screen model.Screen) string {

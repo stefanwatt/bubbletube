@@ -14,7 +14,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type MPVEventFloat struct {
+type MPVFloatValueChangedEvent struct {
 	ID    int64
 	Value float64
 }
@@ -22,12 +22,12 @@ type MPVEventFloat struct {
 func mpvEventCmd(event mpvipc.Event) tea.Cmd {
 	return func() tea.Msg {
 		if event.Data == nil {
-			return MPVEventFloat{
+			return MPVFloatValueChangedEvent{
 				ID:    event.ID,
 				Value: 0,
 			}
 		}
-		return MPVEventFloat{
+		return MPVFloatValueChangedEvent{
 			ID:    event.ID,
 			Value: event.Data.(float64),
 		}
@@ -69,7 +69,7 @@ func InitMpvConn(program *tea.Program) {
 	events, stopListening := conn.NewEventListener()
 	go func() {
 		for event := range events {
-			msg := mpvEventCmd(*event)().(MPVEventFloat)
+			msg := mpvEventCmd(*event)().(MPVFloatValueChangedEvent)
 			if program != nil {
 				program.Send(msg)
 			}

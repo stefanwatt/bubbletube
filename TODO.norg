@@ -41,7 +41,7 @@
 **** (x) use fancy list example for filtering etc.
 **** ( ) improve song selection / navigation 
      maybe pressing 7 should play song #7 in the list
-**** ( ) autoplay next song
+**** ( ) playback queue
 **** (x) kill mpv process when go process dies
 **** (x) display list of songs of playlist in a new view when playlist is selected
 **** ( ) play pause doesnt work on first press
