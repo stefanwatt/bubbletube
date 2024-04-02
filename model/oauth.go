@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -29,13 +30,13 @@ func StartServer(tokenChan chan *oauth2.Token) {
 			http.Error(w, "Code not found", http.StatusBadRequest)
 			return
 		}
-		fmt.Fprintf(w, "Authorization successful. You can close this window.")
 		token, err := getConfig().Exchange(context.Background(), code)
 		if err != nil {
 			log.Printf("Failed to exchange code for token: %v", err)
 			return
 		}
-		tokenChan <- token // Send the token to the channel
+		tokenChan <- token
+		SaveToken(token)
 	})
 
 	go func() {
@@ -88,26 +89,73 @@ func RefreshToken(config *oauth2.Config) {
 
 		if newToken.AccessToken != currentToken.AccessToken {
 			log.Println("Token refreshed")
-			currentToken = newToken // Update the global token
+			currentToken = newToken
+			SaveToken(newToken)
 		}
 	}
 }
 
 func Authenticate() error {
+	config := getConfig()
+	loadedToken, err := LoadToken()
+	if err == nil {
+		currentToken = loadedToken
+	} else {
+		fmt.Println("error loding token", err)
+	}
+	if currentToken != nil && currentToken.RefreshToken != "" {
+		tokenSource := config.TokenSource(context.Background(), currentToken)
+		newToken, err := tokenSource.Token()
+
+		if err != nil {
+			log.Printf("Failed to refresh token: %v", err)
+		} else {
+			currentToken = newToken
+			return nil
+		}
+	} else {
+		if currentToken == nil {
+			fmt.Println("NOT Refreshing token because currentToken is nil")
+		}
+		if currentToken.RefreshToken == "" {
+			fmt.Println("NOT Refreshing token because currentToken.RefreshToken is empty")
+		}
+
+	}
 	tokenChan := make(chan *oauth2.Token)
 	StartServer(tokenChan)
-
-	url := getConfig().AuthCodeURL("state", oauth2.AccessTypeOffline)
-	fmt.Println("Open the following URL in your browser to authenticate:", url)
-
-	err := exec.Command("xdg-open", url).Run()
+	url := config.AuthCodeURL("state", oauth2.AccessTypeOffline, oauth2.SetAuthURLParam("prompt", "consent"))
+	err = exec.Command("xdg-open", url).Run()
 	if err != nil {
 		return err
 	}
-
-	wg.Wait() // Wait for the authentication process to complete
-
-	go RefreshToken(getConfig())
-
+	wg.Wait()
+	go RefreshToken(config)
 	return nil
+}
+
+var tokenPath = "/home/stefan/bubbletube-token.json"
+
+func SaveToken(token *oauth2.Token) error {
+	file, err := json.MarshalIndent(token, "", " ")
+	if err != nil {
+		fmt.Println("Error marshalling token:", err)
+		return err
+	}
+	return os.WriteFile(tokenPath, file, 0600)
+}
+
+func LoadToken() (*oauth2.Token, error) {
+	file, err := os.ReadFile(tokenPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var token oauth2.Token
+	err = json.Unmarshal(file, &token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &token, nil
 }

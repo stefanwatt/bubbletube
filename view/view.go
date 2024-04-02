@@ -3,44 +3,67 @@ package view
 import (
 	"fmt"
 	"io"
-	"math"
 	"strings"
 
 	config "bubbletube/config"
 	model "bubbletube/model"
 
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/lipgloss"
+)
+
+var (
+	borderStyle = lipgloss.NewStyle().
+			BorderStyle(lipgloss.RoundedBorder()).
+			BorderForeground(config.Colors.Overlay0).
+			BorderTop(true).
+			BorderLeft(true).
+			BorderBottom(true).
+			BorderRight(true)
+	centerPanelStyle = borderStyle.
+				Copy().
+				Padding(4)
+	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(config.Colors.Peach)
+	ItemStyle         = lipgloss.NewStyle().PaddingLeft(4)
 )
 
 func View(screen model.Screen) string {
 	if screen.Quitting {
 		return config.QuitTextStyle.Render("Bye")
 	}
-	padding := getPaddingLeft(screen)
-	res := ""
+	bodyStyle := lipgloss.NewStyle().
+		Background(config.Colors.Base).
+		Foreground(config.Colors.Text).
+		Width(screen.WindowWidth).
+		Height(screen.WindowHeight)
+
+	centerPanel := ""
+	width := screen.WindowWidth - 2
+	songControlsHeight := 2
+	songControls := borderStyle.
+		Copy().
+		Height(songControlsHeight).
+		Width(width).
+		Render(renderSongControls(screen))
+
+	centerPanelHeight := screen.WindowHeight - songControlsHeight - 4
 	switch screen.CenterPanel.(type) {
 	case *model.PlaylistsPanel:
-		res = res + applyPaddingToView(renderPlaylistsPanel(screen), padding)
+		centerPanel = centerPanel + centerPanelStyle.
+			Copy().
+			Width(width).
+			Height(centerPanelHeight).
+			Render(renderPlaylistsPanel(screen))
 	case *model.PlaylistDetailPanel:
-		res = res + applyPaddingToView(renderPlaylistDetailPanel(screen), padding)
+		centerPanel = centerPanel + centerPanelStyle.
+			Copy().
+			Width(width).
+			Height(centerPanelHeight).
+			Render(renderPlaylistDetailPanel(screen))
 	}
-	return res + applyPaddingToView(renderSongControls(screen), padding)
-}
-
-func applyPaddingToView(view string, paddingLeft string) string {
-	lines := strings.Split(view, "\n") // Split the view into lines
-	for i, line := range lines {
-		lines[i] = paddingLeft + line // Prepend padding to each line
-	}
-	return strings.Join(lines, "\n") // Join the lines back together
-}
-
-func getPaddingLeft(screen model.Screen) string {
-	spaces := 0
-	if screen.WindowWidth > 80 {
-		spaces = int(math.Floor(float64(screen.WindowWidth-80) / 2))
-	}
-	return strings.Repeat(" ", spaces)
+	return bodyStyle.Render(
+		lipgloss.JoinVertical(lipgloss.Bottom, centerPanel, songControls),
+	)
 }
 
 func renderPlaylistsPanel(screen model.Screen) string {
@@ -62,46 +85,49 @@ func renderPlaylistDetailPanel(screen model.Screen) string {
 func renderSongControls(screen model.Screen) string {
 	progressLabel := formatProgressLabel(screen)
 	volumeProgress := formatVolumeProgress(screen)
+	volumesprogressLabelWidth := 3
 	playPause := getPlayPauseIcon(screen)
-	screen.PlaybackControls.PlaybackProgress.Width = screen.CenterPanel.GetList().Width() - len(progressLabel) - 20 - len(playPause)
+	screen.PlaybackControls.PlaybackProgress.Width = screen.WindowWidth - len(progressLabel) - 20 - len(playPause) - volumesprogressLabelWidth
 	playbackProgressLine := "\n" + playPause + screen.PlaybackControls.PlaybackProgress.View()
 	songTitle := renderSongTitle(screen)
-	return "\n" + songTitle + playbackProgressLine + progressLabel + volumeProgress
+	return songTitle + playbackProgressLine + progressLabel + volumeProgress
 }
 
 func renderSongTitle(screen model.Screen) string {
+	style := lipgloss.NewStyle().Foreground(config.Colors.Flamingo)
 	if screen.PlaybackControls.PlayingSong == nil {
 		return ""
 	}
-	return "  " + screen.PlaybackControls.PlayingSong.TitleText
+	return style.Render("  " + screen.PlaybackControls.PlayingSong.TitleText)
 }
 
 func formatProgressLabel(screen model.Screen) string {
-	minutesPassed, secondsPassed := formatTime(int(screen.PlaybackControls.TimePos))
-	minutesDuration, secondsDuration := formatTime(int(screen.PlaybackControls.Duration))
+	minutesPassed, secondsPassed := toMinutesAndSeconds(int(screen.PlaybackControls.TimePos))
+	minutesDuration, secondsDuration := toMinutesAndSeconds(int(screen.PlaybackControls.Duration))
 
 	return fmt.Sprintf(" %d:%02d/%d:%02d ", minutesPassed, secondsPassed, minutesDuration, secondsDuration)
 }
 
-func formatTime(totalSeconds int) (int, int) {
+func toMinutesAndSeconds(totalSeconds int) (int, int) {
 	minutes := totalSeconds / 60
 	seconds := totalSeconds % 60
 	return minutes, seconds
 }
 
 func formatVolumeProgress(screen model.Screen) string {
-	screen.PlaybackControls.VolumeProgress.Width = 20 // Consider making this a constant or configurable field
+	screen.PlaybackControls.VolumeProgress.Width = config.DefaultVolumeWidth
 	return screen.PlaybackControls.VolumeProgress.View()
 }
 
 func getPlayPauseIcon(screen model.Screen) string {
+	style := lipgloss.NewStyle().Width(3).Align(lipgloss.Center)
 	if screen.PlaybackControls.PlayingSong == nil {
-		return ""
+		return style.Render("")
 	}
 	if screen.PlaybackControls.Playing {
-		return "  "
+		return style.Render("")
 	}
-	return "  "
+	return style.Render("")
 }
 
 func RenderPlaylist(d list.ItemDelegate, w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -111,10 +137,10 @@ func RenderPlaylist(d list.ItemDelegate, w io.Writer, m list.Model, index int, l
 	}
 	str := fmt.Sprintf("%d. %s", index+1, ytItem.Title())
 
-	fn := config.ItemStyle.Render
+	fn := ItemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return config.SelectedItemStyle.Render("> " + strings.Join(s, " "))
+			return SelectedItemStyle.Render(" " + strings.Join(s, " "))
 		}
 	}
 	fmt.Fprint(w, fn(str))
@@ -127,10 +153,10 @@ func RenderSong(d list.ItemDelegate, w io.Writer, m list.Model, index int, listI
 	}
 	str := fmt.Sprintf("%d. %s", index+1, songItem.TitleText)
 
-	fn := config.ItemStyle.Render
+	fn := ItemStyle.Render
 	if index == m.Index() {
 		fn = func(s ...string) string {
-			return config.SelectedItemStyle.Render("> " + strings.Join(s, " "))
+			return SelectedItemStyle.Render(" " + strings.Join(s, " "))
 		}
 	}
 	fmt.Fprint(w, fn(str))

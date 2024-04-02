@@ -6,8 +6,8 @@
 **** (x) init on startup instead when first song is selected
 **** (x) select different song while there's already one playing
 **** ( ) improve load time (maybe preloamaybe preloadd)
-*** ( ) OAUTH
-**** ( ) make it less annoying -> always closing the browser 
+*** (x) OAUTH
+**** (x) make it less annoying -> always closing the browser 
 *** (-) UI
 **** ( ) search bar
 **** ( ) volume progress not updating on every step
@@ -37,7 +37,8 @@
      not working outside detail view
 *** (-) UX
 **** ( ) shuffle/repeat
-**** ( ) use fancy list example for filtering etc.
+**** ( ) store user preferences like volume, last played song 
+**** (x) use fancy list example for filtering etc.
 **** ( ) improve song selection / navigation 
      maybe pressing 7 should play song #7 in the list
 **** ( ) autoplay next song

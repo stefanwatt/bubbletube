@@ -136,12 +136,11 @@ func MapDefaultPlaybackProgress() progress.Model {
 	return playbackProgress
 }
 
-func MapDefaultVolumeProgress() (progress.Model, tea.Cmd) {
+func MapDefaultVolumeProgress() progress.Model {
 	volumeProgress := progress.New(progress.WithDefaultGradient())
 	volumeProgress.Full = '━'
 	volumeProgress.Empty = '─'
-	cmd := volumeProgress.SetPercent(0.5)
-	return volumeProgress, cmd
+	return volumeProgress
 }
 
 func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongItem) tea.Cmd {
@@ -154,9 +153,8 @@ func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongIt
 	screen.PlaybackControls.PlayingSong = &i
 	screen.PlaybackControls.PlaybackProgress = MapDefaultPlaybackProgress()
 
-	var cmd tea.Cmd
-	screen.PlaybackControls.VolumeProgress, cmd = MapDefaultVolumeProgress()
-	return cmd
+	screen.PlaybackControls.VolumeProgress = MapDefaultVolumeProgress()
+	return screen.PlaybackControls.VolumeProgress.SetPercent(config.DefaultVolume)
 }
 
 func MapDefaultScreen(playlists list.Model) Screen {
@@ -171,9 +169,9 @@ func MapDefaultScreen(playlists list.Model) Screen {
 			Duration:         0.0,
 			TimeRemaining:    0.0,
 			Percent:          0.0,
-			VolumeProgress:   progress.New(),
+			VolumeProgress:   MapDefaultVolumeProgress(),
 			PlayingSong:      nil,
-			PlaybackProgress: progress.New(), // TODO should be mapDefault
+			PlaybackProgress: MapDefaultPlaybackProgress(),
 		},
 		Quitting:     false,
 		WindowWidth:  config.DefaultHeight,
