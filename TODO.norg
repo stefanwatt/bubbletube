@@ -14,7 +14,7 @@
      width should be a multiple of the step size
      since we are limited to the amount of cells available to 
      the volume progress bar
-**** ( ) use lipgloss for styling
+**** (-) use lipgloss for styling
 **** (_) progress isn't animated
      actually it is, but the playback progress never increases by multiple cells
      there's no way to animate the single added cell in a TUI
@@ -33,7 +33,7 @@
      also be weird to deviate from the standard
 
 **** (x) timer
-**** ( ) volume
+**** (x) volume
      not working outside detail view
 *** (-) UX
 **** ( ) shuffle/repeat
@@ -41,15 +41,13 @@
 **** (x) use fancy list example for filtering etc.
 **** ( ) improve song selection / navigation 
      maybe pressing 7 should play song #7 in the list
-**** ( ) playback queue
+**** (-) playback queue/history
+     - automatically generate queue from playlist
+     - cannot go back to previous song atm
 **** (x) kill mpv process when go process dies
 **** (x) display list of songs of playlist in a new view when playlist is selected
 **** ( ) play pause doesnt work on first press
-*** (!) REFACTORING
+*** (-) REFACTORING
 
-**** (!) clean up model
-**** ( ) view rendering needs to be modularized
-**** (!) type naming should be consistent
-**** (!) do a mapping between the api response and the model -> only store whats needed
-**** (!) store the full model in the bubbletea model
-
+**** (x) clean up model
+**** (-) view rendering needs to be modularized

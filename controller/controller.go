@@ -97,8 +97,19 @@ var globalKeys = &globalKeymap{
 
 func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		sc.Screen.WindowWidth = msg.Width
+		sc.Screen.WindowHeight = msg.Height
+		list := sc.Screen.CenterPanel.GetList()
+		list.SetWidth(80)
+		list.SetHeight(view.GetCenterPanelHeight(msg.Height) - 1)
+		updatedList, cmd := list.Update(list)
+		sc.Screen.CenterPanel.SetList(updatedList)
+		return sc, cmd
 	case tea.KeyMsg:
 		switch {
+		case key.Matches(msg, globalKeys.noop):
+			return sc, nil
 		case key.Matches(msg, globalKeys.quit):
 			sc.Screen.Quitting = true
 			model.KillMpv()

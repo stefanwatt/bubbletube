@@ -25,11 +25,6 @@ var listviewKeys = &listviewKeymap{
 
 func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		sc.Screen.WindowWidth = msg.Width
-		sc.Screen.WindowHeight = msg.Height
-		sc.Screen.CenterPanel.GetList().SetWidth(80)
-		return sc, nil
 
 	case tea.KeyMsg:
 		if sc.Screen.CenterPanel.GetList().FilterState() == list.Filtering {

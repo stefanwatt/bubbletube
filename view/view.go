@@ -22,10 +22,12 @@ var (
 			BorderRight(true)
 	centerPanelStyle = borderStyle.
 				Copy().
-				Padding(4)
-	SelectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(config.Colors.Peach)
-	ItemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	QueuePanelStyle   = borderStyle.Copy().Foreground(config.Colors.Text).Width(25)
+				PaddingLeft(4).
+				PaddingRight(4)
+	SelectedItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(config.Colors.Peach)
+	ItemStyle          = lipgloss.NewStyle().PaddingLeft(4)
+	QueuePanelStyle    = borderStyle.Copy().Foreground(config.Colors.Text).Width(25)
+	SongControlsHeight = 2
 )
 
 func View(screen model.Screen) string {
@@ -40,13 +42,12 @@ func View(screen model.Screen) string {
 
 	centerPanel := ""
 	width := screen.WindowWidth - 2
-	songControlsHeight := 2
 	songControls := borderStyle.
 		Copy().
-		Height(songControlsHeight).
+		Height(SongControlsHeight).
 		Width(width).
 		Render(renderSongControls(screen))
-	centerPanelHeight := screen.WindowHeight - songControlsHeight - 4
+	centerPanelHeight := GetCenterPanelHeight(screen.WindowHeight)
 	queuePanel := renderQueuePanel(centerPanelHeight)
 	switch screen.CenterPanel.(type) {
 	case *model.PlaylistsPanel:
@@ -66,6 +67,10 @@ func View(screen model.Screen) string {
 	return bodyStyle.Render(
 		lipgloss.JoinVertical(lipgloss.Bottom, centerPanel, songControls),
 	)
+}
+
+func GetCenterPanelHeight(windowHeight int) int {
+	return windowHeight - SongControlsHeight - 4
 }
 
 func renderQueuePanel(height int) string {
