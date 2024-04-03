@@ -3,9 +3,25 @@ package controller
 import (
 	model "bubbletube/model"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+type listviewKeymap struct {
+	choose key.Binding
+	noop   key.Binding
+}
+
+var listviewKeys = &listviewKeymap{
+	choose: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "Select Playlist"),
+	),
+	noop: key.NewBinding(
+		key.WithKeys("q"),
+	),
+}
 
 func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -14,34 +30,33 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		sc.Screen.WindowHeight = msg.Height
 		sc.Screen.CenterPanel.GetList().SetWidth(80)
 		return sc, nil
+
 	case tea.KeyMsg:
 		if sc.Screen.CenterPanel.GetList().FilterState() == list.Filtering {
 			break
 		}
-		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
-			sc.Screen.Quitting = true
-			model.KillMpv()
-			return sc, tea.Quit
-		case "enter":
+		switch {
+		case key.Matches(msg, listviewKeys.noop):
+			return sc, nil
+		case key.Matches(msg, listviewKeys.choose):
 			i, ok := sc.Screen.CenterPanel.GetList().SelectedItem().(model.Playlist)
 			if ok {
 				sc.Screen.CenterPanel.SetChoice(i)
-			}
-			var selectedPlaylist model.Playlist
-			selectedPlaylist, ok = sc.Screen.CenterPanel.GetChoice().(model.Playlist)
-			if !ok {
-				panic("Failed to cast to SongItem")
-			}
-			l := model.MapPlaylistDetailModel(sc.SongDelegate, selectedPlaylist.ID)
-			choice, ok := l.Items()[0].(model.SongItem)
-			if !ok {
-				panic("Failed to cast to SongItem")
-			}
-			sc.Screen.CenterPanel = &model.PlaylistDetailPanel{
-				List:   l,
-				Choice: choice,
-				ID:     selectedPlaylist.ID,
+				var selectedPlaylist model.Playlist
+				selectedPlaylist, ok = sc.Screen.CenterPanel.GetChoice().(model.Playlist)
+				if !ok {
+					panic("Failed to cast to SongItem")
+				}
+				l := model.MapPlaylistDetailModel(sc.SongDelegate, selectedPlaylist.ID)
+				choice, ok := l.Items()[0].(model.SongItem)
+				if !ok {
+					panic("Failed to cast to SongItem")
+				}
+				sc.Screen.CenterPanel = &model.PlaylistDetailPanel{
+					List:   l,
+					Choice: choice,
+					ID:     selectedPlaylist.ID,
+				}
 			}
 			return sc, nil
 		}

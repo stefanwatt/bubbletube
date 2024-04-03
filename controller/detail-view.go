@@ -3,9 +3,36 @@ package controller
 import (
 	model "bubbletube/model"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+type detailviewKeymap struct {
+	back       key.Binding
+	choose     key.Binding
+	cursorDown key.Binding
+	cursorUp   key.Binding
+}
+
+var detailviewKeys = &detailviewKeymap{
+	cursorDown: key.NewBinding(
+		key.WithKeys("down"),
+		key.WithHelp("down", "Down"),
+	),
+	cursorUp: key.NewBinding(
+		key.WithKeys("up"),
+		key.WithHelp("up", "Up"),
+	),
+	back: key.NewBinding(
+		key.WithKeys("backspace"),
+		key.WithHelp("backspace", "Back"),
+	),
+	choose: key.NewBinding(
+		key.WithKeys("enter"),
+		key.WithHelp("enter", "Select Song"),
+	),
+}
 
 func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 	detailPanel, ok := sc.Screen.CenterPanel.(*model.PlaylistDetailPanel)
@@ -24,20 +51,15 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		if detailPanel.List.FilterState() == list.Filtering {
 			break
 		}
-		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
-			sc.Screen.Quitting = true
-			detailPanel.SetChoice(nil)
-			model.KillMpv()
-			return sc, tea.Quit
-		case "down":
+		switch {
+		case key.Matches(msg, detailviewKeys.cursorDown):
 			detailPanel.List.CursorDown()
 			selectedItem, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			if ok {
 				detailPanel.Choice = selectedItem
 			}
 			return sc, nil
-		case "up":
+		case key.Matches(msg, detailviewKeys.cursorUp):
 			detailPanel.List.CursorUp()
 			selectedItem, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			if ok {
@@ -45,7 +67,7 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 			}
 			return sc, nil
 
-		case "backspace":
+		case key.Matches(msg, detailviewKeys.back):
 			list := model.MapPlaylistsModel(sc.PlaylistDelegate)
 			choice, ok := list.Items()[0].(model.Playlist)
 			if !ok {
@@ -56,7 +78,7 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 				Choice: choice,
 			}
 			return sc, nil
-		case "enter":
+		case key.Matches(msg, detailviewKeys.choose):
 			i, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			var cmd tea.Cmd
 			if ok {

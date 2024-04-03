@@ -3,14 +3,11 @@ package controller
 import (
 	model "bubbletube/model"
 	view "bubbletube/view"
-	"io"
 	"math"
 
 	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type ScreenUpdater interface {
@@ -48,30 +45,84 @@ func (sc *ScreenController) Init() tea.Cmd {
 	return nil
 }
 
+type globalKeymap struct {
+	quit         key.Binding
+	volumeDown   key.Binding
+	volumeUp     key.Binding
+	nextSong     key.Binding
+	prevSong     key.Binding
+	skipForward  key.Binding
+	skipBackward key.Binding
+	pause        key.Binding
+	noop         key.Binding
+}
+
+var globalKeys = &globalKeymap{
+	noop: key.NewBinding(
+		key.WithKeys("q"),
+	),
+	quit: key.NewBinding(
+		key.WithKeys("ctrl+c"),
+		key.WithHelp("ctrl+c", "Exit BubbleTube"),
+	),
+	volumeDown: key.NewBinding(
+		key.WithKeys("ctrl+down"),
+		key.WithHelp("ctrl+down", "volume down"),
+	),
+	volumeUp: key.NewBinding(
+		key.WithKeys("ctrl+up"),
+		key.WithHelp("ctrl+up", "volume up"),
+	),
+	nextSong: key.NewBinding(
+		key.WithKeys("ctrl+right"),
+		key.WithHelp("ctrl+up", "Next Song"),
+	),
+	prevSong: key.NewBinding(
+		key.WithKeys("ctrl+left"),
+		key.WithHelp("ctrl+up", "Previous Song"),
+	),
+	skipForward: key.NewBinding(
+		key.WithKeys("right"),
+		key.WithHelp("right", "Skip Forward"),
+	),
+	skipBackward: key.NewBinding(
+		key.WithKeys("left"),
+		key.WithHelp("left", "Skip Backward"),
+	),
+	pause: key.NewBinding(
+		key.WithKeys("p"),
+		key.WithHelp("p", "Pause/Play"),
+	),
+}
+
 func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "ctrl+down":
+		switch {
+		case key.Matches(msg, globalKeys.quit):
+			sc.Screen.Quitting = true
+			model.KillMpv()
+			return sc, tea.Quit
+		case key.Matches(msg, globalKeys.volumeDown):
 			model.VolumeDown()
 			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume - 5
 			return sc, nil
-		case "ctrl+up":
+		case key.Matches(msg, globalKeys.volumeUp):
 			model.VolumeUp()
 			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume + 5
 			return sc, nil
-		case "ctrl+right":
+		case key.Matches(msg, globalKeys.nextSong):
 			sc.Screen.PlaybackControls = model.NextSong(sc.Screen.PlaybackControls)
 			return sc, nil
-		case "left":
+		case key.Matches(msg, globalKeys.skipBackward):
 			model.SkipBackward()
 			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos - 10
 			return sc, nil
-		case "right":
+		case key.Matches(msg, globalKeys.skipForward):
 			model.SkipForward()
 			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos + 10
 			return sc, nil
-		case "p":
+		case key.Matches(msg, globalKeys.pause):
 			sc.Screen.PlaybackControls.Playing = !model.TogglePlayback()
 			return sc, nil
 		}
@@ -123,60 +174,4 @@ func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return updateListView(msg, sc)
 	}
 	return sc, nil
-}
-
-func (sd PlaylistDelegate) Height() int                                     { return 1 }
-func (sd PlaylistDelegate) Spacing() int                                    { return 0 }
-func (sd PlaylistDelegate) UpdateDelegate(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (pd PlaylistDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	view.RenderPlaylist(pd, w, m, index, listItem)
-}
-
-func (sd PlaylistDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
-	return nil
-}
-
-func (sd SongDelegate) Height() int  { return 1 }
-func (sd SongDelegate) Spacing() int { return 0 }
-func (sd SongDelegate) ShortHelpFunc() []key.Binding {
-	return []key.Binding{}
-}
-
-func (sd SongDelegate) FullHelpFunc() [][]key.Binding {
-	return [][]key.Binding{}
-}
-
-type delegateKeyMap struct {
-	enqueue key.Binding
-}
-
-var delegateKeys = &delegateKeyMap{
-	enqueue: key.NewBinding(
-		key.WithKeys("a"),
-		key.WithHelp("a", "Add to Queue"),
-	),
-}
-
-var statusMessageStyle = lipgloss.NewStyle().
-	Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
-	Render
-
-func (sd SongDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
-	item, ok := m.SelectedItem().(model.SongItem)
-	if !ok {
-		return nil
-	}
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, delegateKeys.enqueue):
-			model.Queue.Enqueue(item)
-			return m.NewStatusMessage(statusMessageStyle(item.Title() + " added to queue"))
-		}
-	}
-	return nil
-}
-
-func (sd SongDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	view.RenderSong(sd, w, m, index, listItem)
 }
