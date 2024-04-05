@@ -48,7 +48,7 @@ func View(screen model.Screen) string {
 		Width(width).
 		Render(renderSongControls(screen))
 	centerPanelHeight := GetCenterPanelHeight(screen.WindowHeight)
-	queuePanel := renderQueuePanel(centerPanelHeight)
+	queuePanel := renderQueuePanel(screen.QueuePanel, centerPanelHeight)
 	switch screen.CenterPanel.(type) {
 	case *model.PlaylistsPanel:
 		centerPanel = centerPanel + centerPanelStyle.
@@ -74,14 +74,11 @@ func GetCenterPanelHeight(windowHeight int) int {
 	return windowHeight - SongControlsHeight - 4
 }
 
-func renderQueuePanel(height int) string {
-	queue := model.Queue.GetQueue()
-	res := ""
-	for _, song := range queue {
-		res = res + song.TitleText + "\n"
-	}
-	res = QueuePanelStyle.Copy().Height(height).Render(res)
-	return res
+func renderQueuePanel(queuePanel model.QueuePanel, height int) string {
+	waitlist := queuePanel.Waitlist.View()
+	playlist := queuePanel.Playlist.View()
+	joined := lipgloss.JoinVertical(lipgloss.Bottom, "Waitlist", waitlist, "Playlist", playlist)
+	return QueuePanelStyle.Height(height).Render(joined)
 }
 
 func renderPlaylistsPanel(screen model.Screen) string {

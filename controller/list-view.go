@@ -25,7 +25,6 @@ var listviewKeys = &listviewKeymap{
 
 func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	case tea.KeyMsg:
 		if sc.Screen.CenterPanel.GetList().FilterState() == list.Filtering {
 			break
@@ -34,7 +33,8 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, listviewKeys.noop):
 			return sc, nil
 		case key.Matches(msg, listviewKeys.choose):
-			i, ok := sc.Screen.CenterPanel.GetList().SelectedItem().(model.Playlist)
+			currentList := sc.Screen.CenterPanel.GetList()
+			i, ok := currentList.SelectedItem().(model.Playlist)
 			if ok {
 				sc.Screen.CenterPanel.SetChoice(i)
 				var selectedPlaylist model.Playlist
@@ -43,7 +43,9 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 					panic("Failed to cast to SongItem")
 				}
 				l := model.MapPlaylistDetailModel(sc.SongDelegate, selectedPlaylist.ID)
+				sc.Screen.QueuePanel.Playlist = l
 				choice, ok := l.Items()[0].(model.SongItem)
+				l.SetHeight(currentList.Height())
 				if !ok {
 					panic("Failed to cast to SongItem")
 				}

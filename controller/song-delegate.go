@@ -45,7 +45,8 @@ func (sd SongDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, delegateKeys.enqueue):
-			model.Queue.Enqueue(item)
+			// model.Queue.Enqueue(item)
+			// TODO: can we not handle this here?
 			return m.NewStatusMessage(statusMessageStyle(item.Title() + " added to queue"))
 		}
 	}

@@ -25,8 +25,15 @@ func MpvFloatValueUpdate(msg model.MPVFloatValueChangedEvent, sc *ScreenControll
 		sc.Screen.PlaybackControls.TimePos = msg.Value
 	case model.MyMpvProperties.TimeRemaining.ID:
 		sc.Screen.PlaybackControls.TimeRemaining = msg.Value
-		if msg.Value == 0 {
-			sc.Screen.PlaybackControls = model.NextSong(sc.Screen.PlaybackControls)
+	}
+	return sc, nil
+}
+
+func MpvVoidValueUpdate(msg model.MPVVoidValueChangedEvent, sc *ScreenController) (*ScreenController, tea.Cmd) {
+	switch msg.Name {
+	case "end-file":
+		if msg.Reason == "eof" {
+			sc.Screen.PlaybackControls = sc.Screen.QueuePanel.NextSong(sc.Screen.PlaybackControls)
 		}
 	}
 	return sc, nil

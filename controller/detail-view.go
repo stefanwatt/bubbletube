@@ -11,6 +11,7 @@ import (
 type detailviewKeymap struct {
 	back       key.Binding
 	choose     key.Binding
+	enqueue    key.Binding
 	cursorDown key.Binding
 	cursorUp   key.Binding
 }
@@ -31,6 +32,10 @@ var detailviewKeys = &detailviewKeymap{
 	choose: key.NewBinding(
 		key.WithKeys("enter"),
 		key.WithHelp("enter", "Select Song"),
+	),
+	enqueue: key.NewBinding(
+		key.WithKeys("a"),
+		key.WithHelp("a", "Add to Queue"),
 	),
 }
 
@@ -68,22 +73,31 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 			return sc, nil
 
 		case key.Matches(msg, detailviewKeys.back):
-			list := model.MapPlaylistsModel(sc.PlaylistDelegate)
-			choice, ok := list.Items()[0].(model.Playlist)
+			currentList := sc.Screen.CenterPanel.GetList()
+			newList := model.MapPlaylistsModel(sc.PlaylistDelegate)
+			newList.SetHeight(currentList.Height())
+			choice, ok := newList.Items()[0].(model.Playlist)
 			if !ok {
 				panic("Failed to cast to Playlist")
 			}
 			sc.Screen.CenterPanel = &model.PlaylistsPanel{
-				List:   list,
+				List:   newList,
 				Choice: choice,
 			}
 			return sc, nil
-		case key.Matches(msg, detailviewKeys.choose):
-			i, ok := detailPanel.List.SelectedItem().(model.SongItem)
+		case key.Matches(msg, detailviewKeys.enqueue):
+			item, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			var cmd tea.Cmd
 			if ok {
-				cmd = model.InitPlayingModel(&sc.Screen, detailPanel, i)
-				model.SelectSong(i)
+				sc.Screen.QueuePanel.Enqueue(item)
+			}
+			return sc, cmd
+		case key.Matches(msg, detailviewKeys.choose):
+			item, ok := detailPanel.List.SelectedItem().(model.SongItem)
+			var cmd tea.Cmd
+			if ok {
+				cmd = model.InitPlayingModel(&sc.Screen, detailPanel, item)
+				model.SelectSong(item)
 			}
 			return sc, cmd
 		}

@@ -25,7 +25,7 @@ func main() {
 	}
 
 	playlists := model.MapPlaylistsModel(controller.PlaylistDelegate{})
-	screen := model.MapDefaultScreen(playlists)
+	screen := model.MapDefaultScreen(playlists, controller.SongDelegate{})
 	sc := controller.NewScreenController(screen)
 
 	program = tea.NewProgram(sc)

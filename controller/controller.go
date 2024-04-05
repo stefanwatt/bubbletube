@@ -121,7 +121,7 @@ func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume + 5
 			return sc, nil
 		case key.Matches(msg, globalKeys.nextSong):
-			sc.Screen.PlaybackControls = model.NextSong(sc.Screen.PlaybackControls)
+			sc.Screen.PlaybackControls = sc.Screen.QueuePanel.NextSong(sc.Screen.PlaybackControls)
 			return sc, nil
 		case key.Matches(msg, globalKeys.skipBackward):
 			model.SkipBackward()
@@ -138,6 +138,8 @@ func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case model.MPVFloatValueChangedEvent:
 		return MpvFloatValueUpdate(msg, sc)
+	case model.MPVVoidValueChangedEvent:
+		return MpvVoidValueUpdate(msg, sc)
 
 	case progress.FrameMsg:
 		var (

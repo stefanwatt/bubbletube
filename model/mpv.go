@@ -20,7 +20,12 @@ type MPVFloatValueChangedEvent struct {
 	Value float64
 }
 
-func mpvEventCmd(event mpvipc.Event) tea.Cmd {
+type MPVVoidValueChangedEvent struct {
+	Name   string
+	Reason string
+}
+
+func mpvFloatEventCmd(event mpvipc.Event) tea.Cmd {
 	return func() tea.Msg {
 		if event.Data == nil {
 			return MPVFloatValueChangedEvent{
@@ -31,6 +36,15 @@ func mpvEventCmd(event mpvipc.Event) tea.Cmd {
 		return MPVFloatValueChangedEvent{
 			ID:    event.ID,
 			Value: event.Data.(float64),
+		}
+	}
+}
+
+func mpvVoidEventCmd(event mpvipc.Event) tea.Cmd {
+	return func() tea.Msg {
+		return MPVVoidValueChangedEvent{
+			Name:   event.Name,
+			Reason: event.Reason,
 		}
 	}
 }
@@ -66,12 +80,23 @@ func InitMpvConn(program *tea.Program) {
 		log.Fatal(err)
 	}
 
-	// Handle MPV events
 	events, stopListening := conn.NewEventListener()
 	go func() {
 		for event := range events {
-			msg := mpvEventCmd(*event)().(MPVFloatValueChangedEvent)
-			if program != nil {
+			if program == nil {
+				continue
+			}
+			if event.Name == "end-file" {
+				msg := mpvVoidEventCmd(*event)().(MPVVoidValueChangedEvent)
+				program.Send(msg)
+			} else {
+				msg := mpvFloatEventCmd(*event)().(MPVFloatValueChangedEvent)
+				switch msg.ID {
+				case MyMpvProperties.TimeRemaining.ID:
+					time_remaining = msg.Value
+				case MyMpvProperties.TimePos.ID:
+					time_pos = msg.Value
+				}
 				program.Send(msg)
 			}
 		}

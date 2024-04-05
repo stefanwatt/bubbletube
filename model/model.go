@@ -71,6 +71,7 @@ type PlaybackControls struct {
 }
 
 type Screen struct {
+	QueuePanel       QueuePanel
 	CenterPanel      CenterPanel
 	PlaybackControls PlaybackControls
 	Quitting         bool
@@ -157,10 +158,14 @@ func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongIt
 	return screen.PlaybackControls.VolumeProgress.SetPercent(config.DefaultVolume)
 }
 
-func MapDefaultScreen(playlists list.Model) Screen {
+func MapDefaultScreen(playlists list.Model, songDelegate list.ItemDelegate) Screen {
 	return Screen{
 		CenterPanel: &PlaylistsPanel{
 			List: playlists,
+		},
+		QueuePanel: QueuePanel{
+			Waitlist: list.New([]list.Item{}, songDelegate, config.DefaultWidth, config.DefaultHeight),
+			Playlist: list.New([]list.Item{}, songDelegate, config.DefaultWidth, config.DefaultHeight),
 		},
 		PlaybackControls: PlaybackControls{
 			TimePos:          0,

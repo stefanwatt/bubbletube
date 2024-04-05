@@ -37,6 +37,8 @@
      not working outside detail view
 *** (-) UX
 **** ( ) shuffle/repeat
+**** ( ) skip forward
+     has to be noop when no song is playing
 **** ( ) store user preferences like volume, last played song 
 **** (x) use fancy list example for filtering etc.
 **** ( ) improve song selection / navigation 
