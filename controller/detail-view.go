@@ -95,11 +95,16 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, detailviewKeys.choose):
 			item, ok := detailPanel.List.SelectedItem().(model.SongItem)
 			var cmd tea.Cmd
+			cmds := []tea.Cmd{}
 			if ok {
 				cmd = model.InitPlayingModel(&sc.Screen, detailPanel, item)
+				cmds = append(cmds, cmd)
+				index := detailPanel.List.Index()
+				cmd = sc.Screen.QueuePanel.Playlist.SetItems(detailPanel.List.Items()[index+1:])
+				cmds = append(cmds, cmd)
 				model.SelectSong(item)
 			}
-			return sc, cmd
+			return sc, tea.Batch(cmds...)
 		}
 	}
 

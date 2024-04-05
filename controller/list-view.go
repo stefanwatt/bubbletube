@@ -43,7 +43,7 @@ func updateListView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 					panic("Failed to cast to SongItem")
 				}
 				l := model.MapPlaylistDetailModel(sc.SongDelegate, selectedPlaylist.ID)
-				sc.Screen.QueuePanel.Playlist = l
+				sc.Screen.QueuePanel.Playlist = model.MapWaitlistModel([]list.Item{}, SongDelegate{})
 				choice, ok := l.Items()[0].(model.SongItem)
 				l.SetHeight(currentList.Height())
 				if !ok {

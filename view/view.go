@@ -26,7 +26,7 @@ var (
 				PaddingRight(4)
 	SelectedItemStyle  = lipgloss.NewStyle().PaddingLeft(2).Foreground(config.Colors.Peach)
 	ItemStyle          = lipgloss.NewStyle().PaddingLeft(4)
-	QueuePanelStyle    = borderStyle.Copy().Foreground(config.Colors.Text).Width(25)
+	QueuePanelStyle    = borderStyle.Copy().Foreground(config.Colors.Text).Width(config.DefaultQueuePanelWidth)
 	SongControlsHeight = 2
 )
 
@@ -75,9 +75,12 @@ func GetCenterPanelHeight(windowHeight int) int {
 }
 
 func renderQueuePanel(queuePanel model.QueuePanel, height int) string {
-	waitlist := queuePanel.Waitlist.View()
-	playlist := queuePanel.Playlist.View()
-	joined := lipgloss.JoinVertical(lipgloss.Bottom, "Waitlist", waitlist, "Playlist", playlist)
+	// TODO: theres a weird bug where the playlist is suddenly centered
+	// when a certain amount of waitlist items are added
+	render := lipgloss.NewStyle().Height(config.DefaultWaitlistHeight).Align(lipgloss.Left).Render
+	waitlist := render(queuePanel.Waitlist.View())
+	playlist := render(queuePanel.Playlist.View())
+	joined := lipgloss.JoinVertical(lipgloss.Bottom, waitlist, playlist)
 	return QueuePanelStyle.Height(height).Render(joined)
 }
 

@@ -158,14 +158,26 @@ func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongIt
 	return screen.PlaybackControls.VolumeProgress.SetPercent(config.DefaultVolume)
 }
 
+func MapWaitlistModel(items []list.Item, songDelegate list.ItemDelegate) list.Model {
+	waitlist := list.New(items, songDelegate, config.DefaultWidth, config.DefaultWaitlistHeight)
+	waitlist.SetShowStatusBar(false)
+	waitlist.SetShowTitle(true)
+	waitlist.SetShowHelp(false)
+	return waitlist
+}
+
 func MapDefaultScreen(playlists list.Model, songDelegate list.ItemDelegate) Screen {
+	waitlist := MapWaitlistModel([]list.Item{}, songDelegate)
+	waitlist.Title = "Waitlist"
+	playlist := MapWaitlistModel([]list.Item{}, songDelegate)
+	playlist.Title = "Playlist"
 	return Screen{
 		CenterPanel: &PlaylistsPanel{
 			List: playlists,
 		},
 		QueuePanel: QueuePanel{
-			Waitlist: list.New([]list.Item{}, songDelegate, config.DefaultWidth, config.DefaultHeight),
-			Playlist: list.New([]list.Item{}, songDelegate, config.DefaultWidth, config.DefaultHeight),
+			Waitlist: waitlist,
+			Playlist: playlist,
 		},
 		PlaybackControls: PlaybackControls{
 			TimePos:          0,
