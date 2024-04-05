@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"reflect"
 	"syscall"
 	"time"
 
@@ -88,10 +89,34 @@ func InitMpvConn(program *tea.Program) {
 	setupSignalHandling()
 }
 
+type MpvProperty struct {
+	Name string
+	ID   int64
+}
+
+// Make sure all fields start with uppercase letters to export them
+type MpvProperties struct {
+	Volume        MpvProperty
+	Duration      MpvProperty
+	PercentPos    MpvProperty
+	TimePos       MpvProperty
+	TimeRemaining MpvProperty
+}
+
+// Example variable with exported fields
+var MyMpvProperties = MpvProperties{
+	Volume:        MpvProperty{"volume", 1},
+	Duration:      MpvProperty{"duration", 2},
+	PercentPos:    MpvProperty{"percent-pos", 3},
+	TimePos:       MpvProperty{"time-pos", 4},
+	TimeRemaining: MpvProperty{"time-remaining", 5},
+}
+
 func observeProperties() {
-	properties := []string{"volume", "duration", "percent-pos", "time-pos", "time-remaining"}
-	for id, prop := range properties {
-		if _, err := conn.Call("observe_property", id+1, prop); err != nil {
+	val := reflect.ValueOf(MyMpvProperties)
+	for i := 0; i < val.NumField(); i++ {
+		property := val.Field(i).Interface().(MpvProperty)
+		if _, err := conn.Call("observe_property", property.ID, property.Name); err != nil {
 			fmt.Println(err)
 		}
 	}
@@ -113,8 +138,6 @@ func SelectSong(item SongItem) {
 		fmt.Println("MPV not started")
 		return
 	}
-
-	// Load and play the selected song
 	_, err := conn.Call("loadfile", "https://www.youtube.com/watch?v="+item.VideoID, "replace")
 	if err != nil {
 		fmt.Printf("Failed to load song: %v\n", err)
@@ -129,7 +152,6 @@ func TogglePlayback() bool {
 	return playing
 }
 
-// VolumeUp, VolumeDown, SkipForward, SkipBackward remain unchanged
 func VolumeUp() {
 	if conn == nil {
 		fmt.Println("MPV not started")

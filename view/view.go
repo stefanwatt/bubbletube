@@ -64,9 +64,10 @@ func View(screen model.Screen) string {
 			Render(renderPlaylistDetailPanel(screen))
 	}
 	centerPanel = lipgloss.JoinHorizontal(lipgloss.Right, centerPanel, queuePanel)
-	return bodyStyle.Render(
-		lipgloss.JoinVertical(lipgloss.Bottom, centerPanel, songControls),
-	)
+	return bodyStyle.Copy().
+		Render(
+			lipgloss.JoinVertical(lipgloss.Bottom, centerPanel, songControls),
+		)
 }
 
 func GetCenterPanelHeight(windowHeight int) int {

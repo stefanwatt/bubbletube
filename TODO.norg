@@ -44,6 +44,8 @@
 **** (-) playback queue/history
      - automatically generate queue from playlist
      - cannot go back to previous song atm
+     - bug when you press enter on a song while you have stuff in the queue
+       -> the next song from the queue is dequeued and played
 **** (x) kill mpv process when go process dies
 **** (x) display list of songs of playlist in a new view when playlist is selected
 **** ( ) play pause doesnt work on first press

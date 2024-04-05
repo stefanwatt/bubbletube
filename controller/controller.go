@@ -3,7 +3,6 @@ package controller
 import (
 	model "bubbletube/model"
 	view "bubbletube/view"
-	"math"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/progress"
@@ -20,7 +19,6 @@ type ScreenController struct {
 	Screen           model.Screen
 }
 
-// Define separate structs for each delegate type.
 type PlaylistDelegate struct {
 	*ScreenController
 }
@@ -75,11 +73,11 @@ var globalKeys = &globalKeymap{
 	),
 	nextSong: key.NewBinding(
 		key.WithKeys("ctrl+right"),
-		key.WithHelp("ctrl+up", "Next Song"),
+		key.WithHelp("ctrl+right", "Next Song"),
 	),
 	prevSong: key.NewBinding(
 		key.WithKeys("ctrl+left"),
-		key.WithHelp("ctrl+up", "Previous Song"),
+		key.WithHelp("ctrl+left", "Previous Song"),
 	),
 	skipForward: key.NewBinding(
 		key.WithKeys("right"),
@@ -139,28 +137,7 @@ func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case model.MPVFloatValueChangedEvent:
-		switch msg.ID {
-		case 1:
-			percent := msg.Value / 100
-			sc.Screen.PlaybackControls.Volume = math.Floor(msg.Value)
-			cmd := sc.Screen.PlaybackControls.VolumeProgress.SetPercent(percent)
-			return sc, cmd
-		case 2:
-			sc.Screen.PlaybackControls.Duration = msg.Value
-		case 3:
-			percent := msg.Value / 100
-			sc.Screen.PlaybackControls.Percent = math.Floor(msg.Value)
-			cmd := sc.Screen.PlaybackControls.PlaybackProgress.SetPercent(percent)
-			return sc, cmd
-		case 4:
-			sc.Screen.PlaybackControls.TimePos = msg.Value
-		case 5:
-			sc.Screen.PlaybackControls.TimeRemaining = msg.Value
-			if msg.Value == 0 {
-				sc.Screen.PlaybackControls = model.NextSong(sc.Screen.PlaybackControls)
-			}
-		}
-		return sc, nil
+		return MpvFloatValueUpdate(msg, sc)
 
 	case progress.FrameMsg:
 		var (
