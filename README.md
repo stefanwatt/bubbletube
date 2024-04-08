@@ -1,4 +1,5 @@
 # 🫧 BubbleTube - Bubbletea + YouTube
+A TUI youtube music player written in Go with the [bubbletea framework](https://github.com/charmbracelet/bubbletea/)
 
 ![Banner](assets/bubbletube.png)
 
