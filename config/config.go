@@ -12,8 +12,13 @@ var (
 	DefaultWaitlistHeight  = 12
 	DefaultVolume          = 50.0
 	DefaultVolumeWidth     = 20
-	TitleStyle             = lipgloss.NewStyle().MarginLeft(2)
-	PaginationStyle        = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	HelpStyle              = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	QuitTextStyle          = lipgloss.NewStyle().Margin(1, 0, 2, 4)
+	TitleStyle             = lipgloss.NewStyle().
+				PaddingLeft(2).
+				PaddingRight(2).
+				Align(lipgloss.Left).
+				Background(Colors.Text).
+				Foreground(Colors.Crust)
+	PaginationStyle = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
+	HelpStyle       = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
+	QuitTextStyle   = lipgloss.NewStyle().Margin(1, 0, 2, 4)
 )

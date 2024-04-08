@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"bubbletube/config"
 	model "bubbletube/model"
 
 	"github.com/charmbracelet/bubbles/key"
@@ -103,6 +104,9 @@ func updateDetailView(msg tea.Msg, sc *ScreenController) (tea.Model, tea.Cmd) {
 				cmd = sc.Screen.QueuePanel.Playlist.SetItems(detailPanel.List.Items()[index+1:])
 				cmds = append(cmds, cmd)
 				model.SelectSong(item)
+				// HACK: not sure why this would be necessary
+				// but if i dont do it, then the title is center aligned
+				sc.Screen.QueuePanel.Waitlist.Styles.Title = config.TitleStyle
 			}
 			return sc, tea.Batch(cmds...)
 		}

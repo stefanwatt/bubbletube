@@ -1,3 +1,29 @@
-** Dependencies
-   - mpv
-   - nerdfont
+* 🫧 BubbleTube - Bubbletea + YouTube
+
+  .banner assets/bubbletube.png
+
+** 📦 Dependencies
+   Make sure these are installed before running the app.
+   - {https://github.com/mpv-player/mpv}[MPV] - used for the actual music playback
+   - {https://github.com/ryanoasis/nerd-fonts}[nerd-font] - for icons in the UI
+** ✨ Features
+   - (x) Login with OAuth2
+   - (x) View/Search/Select users playlists
+   - (x) Auto-play playlist
+   - (x) Playback queue
+   - (x) Navigation + Controls via hotkeys
+
+** 🔧 Usage
+   On first run you will be prompted to login with your Google account.
+   This will allow the app to access your playlists and play videos from them.
+   Subsequent runs will not require re-authentication.
+   The app should automatically load and display your playlists.
+
+*** Keybindings
+    - `ctrl + q` - Quit
+    - `Enter` - Select Playlist/Song
+    - `p` - Play/Pause
+    - `a` - Add song to queue
+    - `Left/Right Arrow` - Seek Back/Forward
+    - `ctrl + Left/Right Arrow` - Next/Previous Song
+    - `ctrl + Up/Down Arrow` - Volume Up/Down

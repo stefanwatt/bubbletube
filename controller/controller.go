@@ -113,23 +113,37 @@ func (sc *ScreenController) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			model.KillMpv()
 			return sc, tea.Quit
 		case key.Matches(msg, globalKeys.volumeDown):
-			model.VolumeDown()
-			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume - 5
+			volume, err := model.VolumeDown()
+			if err != nil {
+				return sc, nil
+			}
+			sc.Screen.PlaybackControls.Volume = volume
 			return sc, nil
 		case key.Matches(msg, globalKeys.volumeUp):
-			model.VolumeUp()
-			sc.Screen.PlaybackControls.Volume = sc.Screen.PlaybackControls.Volume + 5
+			volume, err := model.VolumeUp()
+			if err != nil {
+				return sc, nil
+			}
+			sc.Screen.PlaybackControls.Volume = volume
 			return sc, nil
 		case key.Matches(msg, globalKeys.nextSong):
 			sc.Screen.PlaybackControls = sc.Screen.QueuePanel.NextSong(sc.Screen.PlaybackControls)
 			return sc, nil
 		case key.Matches(msg, globalKeys.skipBackward):
-			model.SkipBackward()
-			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos - 10
+			time_pos, time_remaining, err := model.SkipBackward()
+			if err != nil {
+				return sc, nil
+			}
+			sc.Screen.PlaybackControls.TimePos = time_pos
+			sc.Screen.PlaybackControls.TimeRemaining = time_remaining
 			return sc, nil
 		case key.Matches(msg, globalKeys.skipForward):
-			model.SkipForward()
-			sc.Screen.PlaybackControls.TimePos = sc.Screen.PlaybackControls.TimePos + 10
+			time_pos, time_remaining, err := model.SkipForward()
+			if err != nil {
+				return sc, nil
+			}
+			sc.Screen.PlaybackControls.TimePos = time_pos
+			sc.Screen.PlaybackControls.TimeRemaining = time_remaining
 			return sc, nil
 		case key.Matches(msg, globalKeys.pause):
 			sc.Screen.PlaybackControls.Playing = !model.TogglePlayback()

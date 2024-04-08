@@ -177,54 +177,78 @@ func TogglePlayback() bool {
 	return playing
 }
 
-func VolumeUp() {
+func VolumeUp() (float64, error) {
 	if conn == nil {
-		fmt.Println("MPV not started")
-		return
+		return volume, fmt.Errorf("mpv not started")
 	}
-	volume = volume + 5
+	if volume == 100 {
+		return 100, fmt.Errorf("volume at max")
+	}
+	if volume+5 > 100 {
+		volume = 100
+	} else {
+		volume = volume + 5
+	}
 	err := conn.Set("volume", volume)
 	if err != nil {
-		fmt.Println(err)
+		return volume, err
 	}
+	return volume, nil
 }
 
-func VolumeDown() {
+func VolumeDown() (float64, error) {
 	if conn == nil {
-		fmt.Println("MPV not started")
-		return
+		return volume, fmt.Errorf("mpv not started")
 	}
-	volume = volume - 5
+	if volume == 0 {
+		return 0, fmt.Errorf("volume at min")
+	}
+	if volume-5 < 0 {
+		volume = 0
+	} else {
+		volume = volume - 5
+	}
 	err := conn.Set("volume", volume)
 	if err != nil {
-		fmt.Println(err)
+		return volume, err
 	}
+	return volume, nil
 }
 
-func SkipForward() {
+func SkipForward() (float64, float64, error) {
 	if conn == nil {
-		fmt.Println("MPV not started")
-		return
+		return time_pos, time_remaining, fmt.Errorf("mpv not started")
+	}
+	if time_remaining == 0 {
+		return time_pos, time_remaining, fmt.Errorf("no time remaining")
+	}
+	if time_remaining < 10 {
+		return time_pos, time_remaining, fmt.Errorf("less than 10 seconds remaining")
 	}
 	skipBy := math.Floor(math.Min(10, time_remaining))
-
 	_, err := conn.Call("seek", skipBy, "relative", "exact")
 	if err != nil {
-		fmt.Println(err)
+		return time_pos, time_remaining, err
 	}
+	return time_pos, time_remaining, nil
 }
 
-func SkipBackward() {
+func SkipBackward() (float64, float64, error) {
 	if conn == nil {
-		fmt.Println("MPV not started")
-		return
+		return time_pos, time_remaining, fmt.Errorf("MPV not started")
 	}
-
+	if time_pos == 0 {
+		return time_pos, time_remaining, fmt.Errorf("no time remaining")
+	}
+	if time_pos < 10 {
+		return time_pos, time_remaining, fmt.Errorf("less than 10 seconds remaining")
+	}
 	skipBy := -math.Floor(math.Min(10, time_pos))
 	_, err := conn.Call("seek", skipBy, "relative", "exact")
 	if err != nil {
-		fmt.Println(err)
+		return time_pos, time_remaining, err
 	}
+	return time_pos, time_remaining, nil
 }
 
 func KillMpv() {

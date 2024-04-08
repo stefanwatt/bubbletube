@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"io"
 
 	config "bubbletube/config"
@@ -9,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Delegate interface {
@@ -87,9 +87,9 @@ func (m Screen) Init() tea.Cmd {
 	return nil
 }
 
-func MapPlaylistDetailModel(songDelegate list.ItemDelegate, playlistId string) list.Model {
+func MapPlaylistDetailModel(songDelegate list.ItemDelegate, playlist Playlist) list.Model {
 	items := []list.Item{}
-	res := getSongsOfPlaylist(playlistId)
+	res := getSongsOfPlaylist(playlist.ID)
 	for _, song := range res.Items {
 		songItem := SongItem{
 			ID:        song.ID,
@@ -100,7 +100,7 @@ func MapPlaylistDetailModel(songDelegate list.ItemDelegate, playlistId string) l
 	}
 
 	l := list.New(items, songDelegate, config.DefaultWidth, config.DefaultHeight)
-	l.Title = fmt.Sprintf("%d songs", len(items))
+	l.Title = playlist.TitleText
 	l.SetShowStatusBar(false)
 	l.Styles.Title = config.TitleStyle
 	l.Styles.PaginationStyle = config.PaginationStyle
@@ -158,18 +158,20 @@ func InitPlayingModel(screen *Screen, detailPanel *PlaylistDetailPanel, i SongIt
 	return screen.PlaybackControls.VolumeProgress.SetPercent(config.DefaultVolume)
 }
 
-func MapWaitlistModel(items []list.Item, songDelegate list.ItemDelegate) list.Model {
-	waitlist := list.New(items, songDelegate, config.DefaultWidth, config.DefaultWaitlistHeight)
-	waitlist.SetShowStatusBar(false)
-	waitlist.SetShowTitle(true)
-	waitlist.SetShowHelp(false)
-	return waitlist
+func MapQueueListModel(items []list.Item, songDelegate list.ItemDelegate) list.Model {
+	queueList := list.New(items, songDelegate, config.DefaultWidth, config.DefaultWaitlistHeight)
+	queueList.Styles.Title = config.TitleStyle
+	queueList.Styles.NoItems = lipgloss.NewStyle().Foreground(config.Colors.Yellow).MarginLeft(2)
+	queueList.SetShowStatusBar(false)
+	queueList.SetShowTitle(true)
+	queueList.SetShowHelp(false)
+	return queueList
 }
 
 func MapDefaultScreen(playlists list.Model, songDelegate list.ItemDelegate) Screen {
-	waitlist := MapWaitlistModel([]list.Item{}, songDelegate)
+	waitlist := MapQueueListModel([]list.Item{}, songDelegate)
 	waitlist.Title = "Waitlist"
-	playlist := MapWaitlistModel([]list.Item{}, songDelegate)
+	playlist := MapQueueListModel([]list.Item{}, songDelegate)
 	playlist.Title = "Playlist"
 	return Screen{
 		CenterPanel: &PlaylistsPanel{
