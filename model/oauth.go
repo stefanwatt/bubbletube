@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bubbletube/config"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,6 +38,7 @@ func StartServer(tokenChan chan *oauth2.Token) {
 		}
 		tokenChan <- token
 		SaveToken(token)
+		w.Write([]byte("Authorization successful. You can now close this tab and return to the terminal where bubbletube is running."))
 	})
 
 	go func() {
@@ -101,7 +103,7 @@ func Authenticate() error {
 	if err == nil {
 		currentToken = loadedToken
 	} else {
-		fmt.Println("error loding token", err)
+		fmt.Println("failed to load stored token ", err)
 	}
 	if currentToken != nil && currentToken.RefreshToken != "" {
 		tokenSource := config.TokenSource(context.Background(), currentToken)
@@ -116,11 +118,9 @@ func Authenticate() error {
 	} else {
 		if currentToken == nil {
 			fmt.Println("NOT Refreshing token because currentToken is nil")
-		}
-		if currentToken.RefreshToken == "" {
+		} else if currentToken.RefreshToken == "" {
 			fmt.Println("NOT Refreshing token because currentToken.RefreshToken is empty")
 		}
-
 	}
 	tokenChan := make(chan *oauth2.Token)
 	StartServer(tokenChan)
@@ -134,19 +134,17 @@ func Authenticate() error {
 	return nil
 }
 
-var tokenPath = "/home/stefan/bubbletube-token.json"
-
 func SaveToken(token *oauth2.Token) error {
 	file, err := json.MarshalIndent(token, "", " ")
 	if err != nil {
 		fmt.Println("Error marshalling token:", err)
 		return err
 	}
-	return os.WriteFile(tokenPath, file, 0600)
+	return os.WriteFile(config.TOKEN_PATH, file, 0600)
 }
 
 func LoadToken() (*oauth2.Token, error) {
-	file, err := os.ReadFile(tokenPath)
+	file, err := os.ReadFile(config.TOKEN_PATH)
 	if err != nil {
 		return nil, err
 	}

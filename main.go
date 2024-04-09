@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	config "bubbletube/config"
 	controller "bubbletube/controller"
 	model "bubbletube/model"
 
@@ -16,6 +17,7 @@ var program *tea.Program
 
 func main() {
 	err := godotenv.Load() // Load .env file from the current directory
+	config.InitConfig()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
